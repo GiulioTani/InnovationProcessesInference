@@ -1,0 +1,14 @@
+/** \mainpage
+ * The BAA Project (Bayesian Authorship Attribution Project) aims to develop
+ * a tool for the attribution of texts to authors.
+ * 
+ * This isn't achieved via rough and dumb deep learnig, for how appealing it may be,
+ * but through sound statistical inference that remains fully explainable.
+ * 
+ * \section theo_Sec Theorical background.
+ * The method here implemented is based on the Poison - Dirichlet Process, a process
+ * that includes innovations.
+ *
+ * \section over_sec Overview of the method.
+ * Steps in the attribution and so on.
+ */
