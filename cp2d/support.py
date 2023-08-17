@@ -1,3 +1,19 @@
+# CP2D -- Constrained Probability Poisson-Dirichlet
+# Copyright (C) 2023  Giulio Tani Raffaelli
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 import sys
 import os
@@ -871,7 +887,7 @@ class associator:
 
 
 def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shallow=False, sliceSeparated: tp.Optional[int] = None, slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None, authors: tp.Sequence[int] = None):
-    """Attribution is a dictionary as returned from baa.elaboration.baaExperiment.attributions.
+    """Attribution is a dictionary as returned from cp2d.elaboration.cp2dExperiment.attributions.
         Mode is one of strict, optimist, partial describing what to do when more than one author
         is proposed for the same text.
         groundTruth is a dictionary whose keys are the numbers of the books with unknown author

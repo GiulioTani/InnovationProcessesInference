@@ -1,12 +1,28 @@
 #!/home/giulio/miniconda3/bin/python3
 
+# CP2D -- Constrained Probability Poisson-Dirichlet
+# Copyright (C) 2023  Giulio Tani Raffaelli
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 # @file elaboration.py
-# @author Giulio Tani Raffaelli (giulio.tani@uniroma1.it)
+# @author Giulio Tani Raffaelli (tani@cs.cas.cz)
 # @brief Contains the python elaboration for the attribution of books to authors.
-# @version 0.1
-# @date 2020-07-05
+# @version 1.0
+# @date 2023-06-27
 #
-# @copyright Copyright (c) 2020
+# @copyright Copyright (c) 2023
 #
 
 # @package elaboration
@@ -23,26 +39,21 @@ import multiprocessing as mp
 import os
 import shutil
 import sys
-from getopt import getopt
 from glob import glob
 import numpy as np
 import pandas as pd
 import typing as tp
 import time
 
-try:
-    from . import support, logic, numcomp
-except ImportError:
-    sys.path.append("BayesianAuthorshipAttributionII")
-    from baa import support, logic, numcomp
+from . import support, logic, numcomp
 
 
-logging.basicConfig(filename=os.path.join(os.path.dirname(__file__), 'baaExperiment.log'), filemode='w', level=logging.INFO,
+logging.basicConfig(filename=os.path.join(os.path.dirname(__file__), 'cp2dExperiment.log'), filemode='w', level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 
-class baaExperiment ():
+class cp2dExperiment ():
     __noauth = int(0x02)
     __nofrag = int(0x01)
     __auth_t = 'u2'
@@ -897,12 +908,12 @@ def from_command_line(margOut=False, sliceSeparated=False, association={}, **kwa
 
     print("\n       _.%%%%%%%%%%%%%\n"
           "      /- _%%%%%%%%%%%%%\n"
-          "     (_ %\|%% CP--DP %%\n"
+          "     (_ %\|%%% CP2D %%%\n"
           "        %%%$$$$$$$$$$$%\n"
           "          S%S%%%*%%%%S\n"
           "      ,,,,# #,,,,,,,##,,,\n")
 
-    exp = baaExperiment(**kwargs)
+    exp = cp2dExperiment(**kwargs)
     exp.run()
     exp.results(margOut=margOut, machine=False,
                 PANStyle="strict", sliceSeparated=sliceSeparated, association=association)

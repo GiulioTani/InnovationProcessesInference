@@ -1,11 +1,27 @@
+// CP2D -- Constrained Probability Poisson-Dirichlet
+// Copyright (C) 2023  Giulio Tani Raffaelli
+// 
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * @file bookprob.hpp
- * @author Giulio Tani (giulio.tani@uniroma1.it)
- * @brief Defines classes, exceptions and functions for BAAII
- * @version 0.1
- * @date 2020-07-05
+ * @author Giulio Tani Raffaelli (tani@cs.cas.cz)
+ * @brief Defines classes, exceptions and functions for CP2D
+ * @version 1.0
+ * @date 2023-06-27
  * 
- * @copyright Copyright (c) 2020
+ * @copyright Copyright (c) 2023
  * 
  * @bug If betwen checking the existance of the file in the constructor and opening it in fread_from_* the file is deleted the program closes without throwing.
  */

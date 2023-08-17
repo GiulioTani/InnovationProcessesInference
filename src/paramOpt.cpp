@@ -1,13 +1,29 @@
+// CP2D -- Constrained Probability Poisson-Dirichlet
+// Copyright (C) 2023  Giulio Tani Raffaelli
+// 
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * @file paramOpt.cpp
- * @author Giulio Tani (giulio.tani@uniroma1.it)
+ * @author Giulio Tani Raffaelli (tani@cs.cas.cz)
  * @brief Optimizes the parameters alpha and theta following a maximum
  * likelyhood principle assuming that every line in the input files (or stdin)
  * is an element of a PD Process.
- * @version 0.1
- * @date 2020-09-01
- *
- * @copyright Copyright (c) 2020
+ * @version 1.0
+ * @date 2023-06-27
+ * 
+ * @copyright Copyright (c) 2023
  *
  */
 

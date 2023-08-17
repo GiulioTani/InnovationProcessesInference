@@ -10,6 +10,6 @@ The file authorNames.dat contains the association between author numbers and aut
 
 ## Technical info
 
-All the texts were encoded as Latin1 (ISO/IEC 8859-1:1998), occasional out-of-encoding characters translitterated, and then prepared using the `baa prepare` command for further processing.
+All the texts were encoded as Latin1 (ISO/IEC 8859-1:1998), occasional out-of-encoding characters translitterated, and then prepared using the `cp2d prepare` command for further processing.
 
 _NB:_ all newlines are removed from the texts, when opening with a text editor be sure that it behaves with lines over 1 MB. As an example, currently Sublime Text and VS Code open these files smoothly.

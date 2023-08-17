@@ -1,3 +1,19 @@
+# CP2D -- Constrained Probability Poisson-Dirichlet
+# Copyright (C) 2023  Giulio Tani Raffaelli
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from . import support
 import os
 from ctypes import c_char_p, c_int, cdll, create_string_buffer, c_char_p
@@ -219,7 +235,7 @@ def assign(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.Mappi
     """From the proposed attributions compute base statistics.
 
     Args:
-        attributions (tp.Mapping[tp.Sequence[int,int],tp.Mapping[float,tp.Mapping[str,tp.Sequence]]]): Attribution object, a map with (author,book) tuples as keys and the result of baaExperiment.attributor as values.
+        attributions (tp.Mapping[tp.Sequence[int,int],tp.Mapping[float,tp.Mapping[str,tp.Sequence]]]): Attribution object, a map with (author,book) tuples as keys and the result of cp2dExperiment.attributor as values.
 
     Returns:
         pd.DataFrame: The res object (a map of maps indexed by delta and then by kind of attribution), and the optional per slice res object (not implemented).
@@ -250,7 +266,7 @@ def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.
     """From the proposed attributions compute base statistics.
 
     Args:
-        attributions (tp.Mapping[tp.Sequence[int,int],tp.Mapping[float,tp.Mapping[str,tp.Sequence]]]): Attribution object, a map with (author,book) tuples as keys and the result of baaExperiment.attributor as values.
+        attributions (tp.Mapping[tp.Sequence[int,int],tp.Mapping[float,tp.Mapping[str,tp.Sequence]]]): Attribution object, a map with (author,book) tuples as keys and the result of cp2dExperiment.attributor as values.
         nonAttri (tp.Sequence[int]): The authors whose book are not to be attributed.
         totalFragments (int): Total number of fragments.
         allowPartial (bool): Allow partial attributions i MR (half attribution if two authors with the same number of fragments and so on)
