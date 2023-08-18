@@ -716,7 +716,9 @@ def read_config(configPath=None, workers=4, Encoding="latin1"):
     if not configPath:
         if os.path.isfile("config.ini"):
             configPath = "config.ini"
-    # looks for the config file in this sort of "PATH"
+        # looks for the config file in this sort of "PATH"
+        elif os.path.isfile(os.path.join(el_path,"config.ini")):
+            configPath = os.path.join(el_path,"config.ini")
         else:
             logger.info("Configuration file not found")
             print(
@@ -762,7 +764,7 @@ def read_config(configPath=None, workers=4, Encoding="latin1"):
         print(
             "Missing 'elaboration' section in config file. Going on with default values.", file=sys.stderr)
 
-    return workers, Encoding
+    return workers, Encoding, configPath
 
 
 def foldsize(database, folds, authorFiles):

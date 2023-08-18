@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # CP2D -- Constrained Probability Poisson-Dirichlet
 # Copyright (C) 2023  Giulio Tani Raffaelli
 

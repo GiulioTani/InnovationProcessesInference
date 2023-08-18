@@ -120,9 +120,10 @@ class cp2dExperiment ():
             self.__numSlices = None
             logic.check_parameters(self.__param)
             self.__param['database']=os.path.abspath(self.__param['database'])
-            self.__param['configFile']=os.path.abspath(self.__param['configFile'])
+            if self.__param['configFile']:
+                self.__param['configFile']=os.path.abspath(self.__param['configFile'])
             logic._Q_F = self.__param['fragment']
-            self.workers, self.Encoding = logic.read_config(
+            self.workers, self.Encoding, self.__param['configFile']= logic.read_config(
                 configPath=self.__param['configFile'], workers=4, Encoding="latin1")
 
             if os.path.isfile(os.path.join(self.__param['database'], "encoding.dat")):

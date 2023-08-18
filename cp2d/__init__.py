@@ -47,7 +47,7 @@ def main ():
                             metavar='size', default=0, dest='authorLength')
     run_parser.add_argument('-s', type=str, metavar='Name', dest="suffix",
                             help="Suffix to folder name to keep order in the results. If left blank a random unique 5 char string is added during output directory creation.")
-    run_parser.add_argument('-c', type=str, help="Path to the config file if not using a global configuration.", metavar='path', dest='configFile')
+    run_parser.add_argument('-c', type=str, help="Path to the config file if not using a global configuration.", metavar='path', dest='configFile', default="")
     run_parser.add_argument('-p', type=str, help="Path to the file storing P0.", metavar='path', dest='P0file')
     run_parser.add_argument('-D', type=float, nargs='+', dest="delta", default=1, help="Values of delta for attribution.")
     group_run2 = run_parser.add_mutually_exclusive_group()
