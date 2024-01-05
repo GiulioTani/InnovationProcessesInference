@@ -37,6 +37,7 @@
 #include <iomanip>
 #include "lib/authorSplitter.hpp"
 #include <climits>
+#include <functional>
 
 #include <sys/ioctl.h> //ioctl() and TIOCGWINSZ
 #include <unistd.h>    // for STDOUT_FILENO
@@ -49,27 +50,27 @@ namespace supp
     bool FLAG = true;  /**< Activates the controlled shutdown when the first SIGINT arrives. */
     bool NOHUP = true; /**< Makes the signal handler ignore the first SIGHUP.*/
     std::mutex shelf_lock, queue_lock;
-    task_iterator::task_iterator(dt::auth_id_t aid, const std::vector<supp::slice> *cake, size_t size) : my_auth(aid), cakelist(cake), _size(size)
+    task_iterator::task_iterator(dt::auth_id_t aid, std::vector<std::reference_wrapper<const supp::slice>> cake_part, size_t size) : my_auth(aid), cakelist(cake_part), _size(size)
     {
         if (!_size)
             calculate_size();
-        now_slice = cakelist->begin();
-        now_aut = now_slice->shelf.begin();
+        now_slice = cakelist.begin();
+        now_aut = now_slice->get().shelf.begin();
         now_book = now_aut->second.begin();
     }
 
     void task_iterator::calculate_size()
     {
         _size = 0;
-        for (auto i : *cakelist)
-            for (auto j : i.shelf)
+        for (auto i : cakelist)
+            for (auto j : i.get().shelf)
                 _size += j.second.size();
     }
 
     task task_iterator::pop()
     {
         task ret;
-        if (now_slice == cakelist->end())
+        if (now_slice == cakelist.end())
         {
             if (returned.empty())
             {
@@ -88,11 +89,11 @@ namespace supp
             ret = {my_auth, now_aut->first, *now_book};
             if (++now_book == now_aut->second.end())
             {
-                if (++now_aut != now_slice->shelf.end())
+                if (++now_aut != now_slice->get().shelf.end())
                     now_book = now_aut->second.begin();
-                else if (++now_slice != cakelist->end())
+                else if (++now_slice != cakelist.end())
                 {
-                    now_aut = now_slice->shelf.begin();
+                    now_aut = now_slice->get().shelf.begin();
                     now_book = now_aut->second.begin();
                 }
             }
@@ -107,25 +108,34 @@ namespace supp
         _size++;
     }
 
-    list_manager::list_manager(const library &shelf, const std::vector<supp::slice> &cake)
+    list_manager::list_manager(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
     {
-        create(shelf, cake);
+        create(shelf, cake, slices);
     }
-    void list_manager::create(const library &shelf, const std::vector<supp::slice> &cake)
+    void list_manager::create(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
     {
         size_t n = 0;
         std::vector<std::pair<dt::auth_id_t, dt::book_id_t>> tempV, tempV2, jobs;
+        std::vector<std::reference_wrapper<const supp::slice>> cake_part;
+        if (slices.size() > 0)
+            for (auto i : slices)
+                cake_part.push_back(cake[i]);
+        else
+            for (auto& slice : cake)
+                cake_part.push_back(slice);
+
         if (created)
             throw std::logic_error("Create list managers only once");
         else
         {
-            for (auto &aut1 : shelf)
-                n += aut1.second.size();
+            for (auto my_slice : cake_part)
+                for (auto &aut1 : my_slice.get().shelf)
+                    n += aut1.second.size();
             taskers.clear();
             std::cout << "Scheduling tasks\r" << std::flush;
             for (auto &aut1 : shelf)
                 if (aut1.first)
-                    taskers.emplace(aut1.first, task_iterator(aut1.first, &cake, n));
+                    taskers.emplace(aut1.first, task_iterator(aut1.first, cake_part, n));
 
             Priority = std::forward_list<dt::auth_id_t>(taskers.size());
             auto autP = Priority.begin();

@@ -114,9 +114,9 @@ namespace supp
     private:
         /* data */
         dt::auth_id_t my_auth;
-        const std::vector<supp::slice> *cakelist;
+        std::vector<std::reference_wrapper<const supp::slice>> cakelist;
         size_t _size;
-        std::vector<supp::slice>::const_iterator now_slice;
+        std::vector<std::reference_wrapper<const supp::slice>>::iterator now_slice;
         std::unordered_map<dt::auth_id_t, std::set<dt::book_id_t>>::const_iterator now_aut;
         std::set<dt::book_id_t>::const_iterator now_book;
         std::queue<std::pair<dt::auth_id_t, dt::book_id_t>> returned;
@@ -125,7 +125,7 @@ namespace supp
 
     public:
         task_iterator() = default;
-        task_iterator(dt::auth_id_t aid, const std::vector<supp::slice> *cake, size_t size = 0);
+        task_iterator(dt::auth_id_t aid, std::vector<std::reference_wrapper<const supp::slice>> cake_part, size_t size = 0);
         task pop();
         void place_back(task job);
         size_t size() const { return _size; };
@@ -164,8 +164,8 @@ namespace supp
          *
          * @param shelf The \c library object used to initialize.
          */
-        list_manager(const library &shelf, const std::vector<supp::slice> &cake);
-        void create(const library &shelf, const std::vector<supp::slice> &cake);
+        list_manager(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
+        void create(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
         /**
          * @brief Assigns a task to a worker.
          *

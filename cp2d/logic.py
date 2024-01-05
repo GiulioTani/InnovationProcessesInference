@@ -262,7 +262,7 @@ def assign(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.Mappi
     ret_df = {delta:pd.DataFrame(ret[delta]).set_index(["A","B","S"]).sort_index() for delta in ret}
     return pd.concat(ret_df, axis=1)
 
-def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.Mapping[str, tp.Sequence]]], nonAttri: tp.Sequence[int], allowPartial: bool, authors: tp.Sequence, sliceSeparated: tp.Optional[int] = None) -> tp.Tuple[tp.Mapping[float, tp.Mapping[str, tp.Mapping[str, float]]], tp.Optional[tp.List[tp.Mapping[float, tp.Mapping[str, tp.Mapping[str, float]]]]]]:
+def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.Mapping[str, tp.Sequence]]], nonAttri: tp.Sequence[int], allowPartial: bool, authors: tp.Sequence, sliceSeparated: tp.Optional[int] = None, goodSlices: tp.Sequence[int] = []) -> tp.Tuple[tp.Mapping[float, tp.Mapping[str, tp.Mapping[str, float]]], tp.Optional[tp.List[tp.Mapping[float, tp.Mapping[str, tp.Mapping[str, float]]]]]]:
     """From the proposed attributions compute base statistics.
 
     Args:
@@ -283,6 +283,8 @@ def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.
     if sliceSeparated:
         slSep = {}
         slices = _Q_which_slice
+        if goodSlices:
+            sliceSeparated = len(goodSlices)
     else:
         slSep = None
         slices = support.fakeGet()
@@ -306,52 +308,51 @@ def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.
     if nonAttri:
         notExcludedAuthor = np.array([(a not in nonAttri) and (a > 0)
                       for a in authors], dtype=bool)  # not attributed
-    knownAuthor = np.array([(a > 0)
-                  for a in authors], dtype=bool)  # known author
-    if knownAuthor.all():
-        print("Useless array!!!!")
         
     authorOrder = {a: i for i, a in enumerate(authors)}  # author order
-    authorBooksInSlice = np.ma.zeros((len(authors), sliceSeparated))  # author books in slice
-    authorFragmentsInSlice = np.ma.zeros((len(authors), sliceSeparated)
-                     )  # author fragments in slice
+    authorBooksInSlice = np.zeros((len(authors), sliceSeparated))  # author books in slice
+    authorFragmentsInSlice = np.zeros((len(authors), sliceSeparated))  # author fragments in slice
     for ab in attributions:
         if ab[0]:
-            authorBooksInSlice[authorOrder[ab[0]], slices[ab]] += 1
-            authorFragmentsInSlice[authorOrder[ab[0]], slices[ab]] += fra.loc[ab, 'fn']
-    authorBooksTotal = np.sum(authorBooksInSlice, 1)
-    authorFragmentsTotal = np.sum(authorFragmentsInSlice, 1)
+            if goodSlices and _Q_which_slice[ab] not in goodSlices:
+                continue
+            my_slice = goodSlices.index(slices[ab]) if goodSlices and sliceSeparated>1 else slices[ab]
+            authorBooksInSlice[authorOrder[ab[0]], my_slice] += 1
+            authorFragmentsInSlice[authorOrder[ab[0]], my_slice] += fra.loc[ab, 'fn']
     for nowDelta in attributions[tab]:
-        authorCorrectForSliceType = {typ: np.ma.zeros((len(authors), sliceSeparated))
+        authorCorrectForSliceType = {typ: np.zeros((len(authors), sliceSeparated))
+               for typ in attributions[tab][nowDelta]}
+        authorAssignedForSliceType = {typ: np.zeros((len(authors), sliceSeparated))
                for typ in attributions[tab][nowDelta]}
         for ab in attributions:
-            if not ab[0]:
+            if not ab[0] or (goodSlices and _Q_which_slice[ab] not in goodSlices):
                 continue
+            my_slice = goodSlices.index(slices[ab]) if goodSlices and sliceSeparated>1 else slices[ab]
             for attributionType in attributions[tab][nowDelta]:
                 if attributionType == "FRA":
-                    authorCorrectForSliceType["FRA"][authorOrder[ab[0]], slices[ab]
+                    authorCorrectForSliceType["FRA"][authorOrder[ab[0]], my_slice
                                ] += attributions[ab][nowDelta]["FRA"][0]
                 else:
                     if ab[0] in attributions[ab][nowDelta][attributionType][0][0]:
-                        authorCorrectForSliceType[attributionType][authorOrder[ab[0]], slices[ab]
+                        authorCorrectForSliceType[attributionType][authorOrder[ab[0]], my_slice
                                  ] += fractyp(1/len(attributions[ab][nowDelta][attributionType][0][0]))
+                    if allowPartial or len(attributions[ab][nowDelta][attributionType][0][0])==1:
+                        for a in attributions[ab][nowDelta][attributionType][0][0]:
+                            try:
+                                authorAssignedForSliceType[attributionType][authorOrder[a], my_slice] += 1
+                            except KeyError:
+                                pass
         ret[nowDelta] = {"all": {}}
         if nonAttri:
             ret[nowDelta]["exc"] = {}
         for attributionType in authorCorrectForSliceType:
-            tmpTyp = np.sum(authorCorrectForSliceType[attributionType], 1)
-            if attributionType == 'FRA':
-                ret[nowDelta]['all']['FRA'] = np.sum(
-                    tmpTyp[knownAuthor])/np.sum(authorFragmentsTotal[knownAuthor])
-            else:
-                ret[nowDelta]['all'][attributionType] = np.sum(tmpTyp[knownAuthor])/np.sum(authorBooksTotal[knownAuthor])
+            tmpAuthorCorrect = np.sum(authorCorrectForSliceType[attributionType], 1)
+            tmpAuthorAssigned = np.sum(authorAssignedForSliceType[attributionType], 1)
+            authorBooksTotal = np.sum(authorBooksInSlice, 1)
+            authorFragmentsTotal = np.sum(authorFragmentsInSlice, 1)
+            ret[nowDelta]['all'][attributionType] = StatsFromAuthorsSLice(tmpAuthorCorrect, tmpAuthorAssigned, authorBooksTotal, authorFragmentsTotal, attributionType)
             if nonAttri:
-                if attributionType == 'FRA':
-                    ret[nowDelta]["exc"]['FRA'] = np.sum(
-                        tmpTyp[notExcludedAuthor])/np.sum(authorFragmentsTotal[notExcludedAuthor])
-                else:
-                    ret[nowDelta]['exc'][attributionType] = np.sum(
-                        tmpTyp[notExcludedAuthor])/np.sum(authorBooksTotal[notExcludedAuthor])
+                ret[nowDelta]['exc'][attributionType] = StatsFromAuthorsSLice(tmpAuthorCorrect, tmpAuthorAssigned, authorBooksTotal, authorFragmentsTotal, attributionType, notExcludedAuthor)
         if sliceSeparated > 1:
             slSep[nowDelta] = [{} for s in range(sliceSeparated)]
             for s in range(sliceSeparated):
@@ -359,36 +360,45 @@ def return_dict(attributions: tp.Mapping[tp.Sequence[int], tp.Mapping[float, tp.
                 if nonAttri:
                     slSep[nowDelta][s]["exc"] = {}
                 for attributionType in authorCorrectForSliceType:
-                    authorCorrectForSliceType[attributionType][:, s] = np.ma.masked
-                    authorBooksInSlice[:, s] = np.ma.masked
-                    authorFragmentsInSlice[:, s] = np.ma.masked
-                    tmpTyp = np.sum(authorCorrectForSliceType[attributionType], 1)
-                    if attributionType == 'FRA':
-                        slSep[nowDelta][s]['all']['FRA'] = np.sum(
-                            tmpTyp[knownAuthor])/np.sum(authorFragmentsInSlice[knownAuthor, :])
-                    else:
-                        slSep[nowDelta][s]['all'][attributionType] = np.sum(
-                            tmpTyp[knownAuthor])/np.sum(authorBooksInSlice[knownAuthor, :])
+                    slSep[nowDelta][s]['all'][attributionType] = StatsFromAuthorsSLice(authorCorrectForSliceType[attributionType][:,s], authorAssignedForSliceType[attributionType][:,s], authorBooksInSlice[:, s], authorFragmentsInSlice[:, s], attributionType)
                     if nonAttri:
-                        if attributionType == 'FRA':
-                            slSep[nowDelta][s]["exc"]['FRA'] = np.sum(
-                                tmpTyp[notExcludedAuthor])/np.sum(authorFragmentsInSlice[notExcludedAuthor, :])
-                        else:
-                            slSep[nowDelta][s]['exc'][attributionType] = np.sum(
-                                tmpTyp[notExcludedAuthor])/np.sum(authorBooksInSlice[notExcludedAuthor, :])
-                    authorCorrectForSliceType[attributionType].mask = np.ma.nomask
-                    authorBooksInSlice.mask = np.ma.nomask
-                    authorFragmentsInSlice.mask = np.ma.nomask
-
+                        slSep[nowDelta][s]['exc'][attributionType] = StatsFromAuthorsSLice(authorCorrectForSliceType[attributionType][:,s], authorAssignedForSliceType[attributionType][:,s], authorBooksInSlice[:, s], authorFragmentsInSlice[:, s], attributionType, notExcludedAuthor)
     return ret, slSep
 
+def StatsFromAuthorsSLice(tmpAuthorCorrect, tmpAuthorAssigned, authorBooksTotal, authorFragmentsTotal, attributionType, notExcludedAuthor=slice(None)):
+    if attributionType == 'FRA':
+        return np.sum(tmpAuthorCorrect[notExcludedAuthor])/np.sum(authorFragmentsTotal[notExcludedAuthor])
+    else:
+        return StatsFromType(authorBooksTotal[notExcludedAuthor], tmpAuthorCorrect[notExcludedAuthor], tmpAuthorAssigned[notExcludedAuthor])
 
-def assign_unknown(attributions):
+def StatsFromType (authorBooksTotal, authorCorrect, authorAssigned):
+    mask = authorCorrect == 0
+    mask2 = authorBooksTotal>0
+    precision = authorCorrect/authorAssigned
+    recall = authorCorrect/authorBooksTotal
+    F1 = 2*authorCorrect/(authorBooksTotal+authorAssigned)
+    precision[mask] = 0
+    recall[mask] = 0
+    F1[mask] = 0
+
+    return {"micro":{"P":np.average(precision, weights=authorBooksTotal), "R":np.average(recall, weights=authorBooksTotal), "F":np.average(F1, weights=authorBooksTotal)}, "macro":{"P":np.average(precision, weights=mask2), "R":np.average(recall, weights=mask2), "F":np.average(F1, weights=mask2)}}
+
+def assign_unknown(attributions, delta: float = None):
     unk = {}
     for tab in attributions:
         break
     for nowDelta in attributions[tab]:
         unk[nowDelta] = {}
+
+    if delta is not None:
+        whichDeltas = set([delta])
+        if 0 in attributions[tab]:
+            whichDeltas.add(0)
+        whichDeltas = list(whichDeltas)
+    else:
+        whichDeltas = list(attributions[tab].keys())
+
+    for nowDelta in whichDeltas:
         for ab in attributions:
             if ab[0] <= 0:
                 unk[nowDelta][str(ab)] = {k: v for k,
@@ -402,10 +412,10 @@ def convert(o):
     raise TypeError
 
 
-def add_results_line(dataDir, ret, nonAttri, allowPartial, logDelta, unk, saveUnk=True, F=None, A=None):
+def add_results_line(dataDir, ret, nonAttri, allowPartial, logDelta, unk, saveUnk=True, F=None, A=None, goodSlices=None):
     global _Q_excluded, _Q_association
     res_dic = {"ret": ret, "exc": list(set(_Q_excluded)), "noa": list(
-        set(nonAttri)), "asso": _Q_association, "part": allowPartial, "delta": logDelta, "unknowns": unk if saveUnk else {}}
+        set(nonAttri)), "asso": _Q_association, "part": allowPartial, "delta": logDelta, "unknowns": unk if saveUnk else {}, "slices":goodSlices if goodSlices else []}
     if F is not None:
         res_dic["F"] = F
     if A is not None:
@@ -586,9 +596,13 @@ def print_margout_book_line(authorBook, attribution, fragmentNum, file):
 
 
 def print_margout_summary_line(returnDict, file, which='all'):
-    print(f'\n\nSuccess Rate: ', end="\t", file=file)
+    print(f'\n\nSuccess Rate:\n\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t', end="\n", file=file)
     for r in returnDict[which].items():
-        print(f"{r[0]}: {r[1]*100:.4}%", end="\t", file=file)
+        if r[0] == "FRA":
+            print(f"{r[0]}\t     \t{r[1]*100:.4}%", end="\n", file=file)
+        else:
+            print(r[0], *(f"{r[1]['micro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
+                      *(f"{r[1]['macro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']), sep="\t", file=file)
     print("\n\n", file=file)
 
 

@@ -255,7 +255,7 @@ def process_controller():
         raise
 
 
-def calprob(dataDir, resultsDir, outFile="", slicesize=0, ngram=0, fragment=0, authsize=0, P0file: str="", dumpP0: bool=False):
+def calprob(dataDir, resultsDir, outFile="", slicesize=0, ngram=0, fragment=0, authsize=0, goodSlices = [], P0file: str="", dumpP0: bool=False):
     """
     Organizes the computation of the probabilities.
 
@@ -289,7 +289,7 @@ def calprob(dataDir, resultsDir, outFile="", slicesize=0, ngram=0, fragment=0, a
         #p[0].start()
         logger.info(f"Starting probability computation")
         p.append(mp.Process(target=prob_compute, args=(
-            dataDir, resultsDir, slicesize, ngram, fragment, authsize, P0file, dumpP0)))
+            dataDir, resultsDir, slicesize, ngram, fragment, authsize, goodSlices, P0file, dumpP0)))
         p[1].start()
         logger.info(f"Starting interactive loop")
         while p[1].is_alive():
@@ -343,7 +343,7 @@ def calprob(dataDir, resultsDir, outFile="", slicesize=0, ngram=0, fragment=0, a
         raise
 
 
-def prob_compute(dataDir, resultsDir, slicesize, ngram, fragment, authsize, P0file: str="", dumpP0: bool=False):
+def prob_compute(dataDir, resultsDir, slicesize, ngram, fragment, authsize, goodSlices, P0file: str="", dumpP0: bool=False):
     """
     Launches the computation of conditional probabilities
 
@@ -368,6 +368,9 @@ def prob_compute(dataDir, resultsDir, slicesize, ngram, fragment, authsize, P0fi
         args.extend(['-p', P0file])
     elif dumpP0:
         args.append('-P')
+    if len(goodSlices):
+        for s in goodSlices:
+            args.extend(['-S', str(s)])
     logger.info(f"Launching C++ code")
     print(" ".join(args))
     sys.stdout.flush()

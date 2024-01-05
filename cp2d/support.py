@@ -21,7 +21,6 @@ import numpy as np
 import shutil
 import configparser
 from multiprocessing import cpu_count
-from collections import MutableMapping
 from ctypes import Structure, addressof, byref, c_char, c_char_p, c_int, c_long, c_uint16, c_uint32, c_ushort, c_void_p, cdll, c_ulong, POINTER, cast, c_char_p, c_double
 import logging
 import time
@@ -399,6 +398,7 @@ try:
             def tqdm(iterable=None, desc=None, leave=True, *args, **kwargs):
                 if desc:
                     print(desc, file=sys.stderr, end="\n" if leave else "\r")
+                    sys.stderr.flush()
                 if iterable is not None:
                     return iterable.__iter__()
                 else:
@@ -680,7 +680,7 @@ def corpus_shuffler(inFolder="", preserveDist=None, **kwargs):
                         os.path.join(outdir, f"encoding.dat"))
 
 
-class lockable_dict(dict, MutableMapping):
+class lockable_dict(dict):
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
         obj.__lock = False
@@ -693,9 +693,6 @@ class lockable_dict(dict, MutableMapping):
         if checks:
             self.register_checks()
 
-    def __getitem__(self, key):
-        return dict.__getitem__(self, key)
-
     def __setitem__(self, key, value):
         if self.__lock:
             raise ValueError(
@@ -707,18 +704,6 @@ class lockable_dict(dict, MutableMapping):
                 raise ValueError(f"Value {value} for element {key} invalid.")
         else:
             dict.__setitem__(self, key, value)
-
-    def __delitem__(self, key):
-        dict.__delitem__(self, key)
-
-    def __iter__(self):
-        return dict.__iter__(self)
-
-    def __len__(self):
-        return dict.__len__(self)
-
-    def __contains__(self, x):
-        return dict.__contains__(self, x)
 
     def lock(self):
         if not self.__lock:
@@ -1030,10 +1015,10 @@ def print_PAN11(_micro, _macro, results=None, shallow=False, sliceSeparated: tp.
             macroPAN[S] = PANres[f"M_{colnames[S]}"].sort_values().to_numpy()
         PANtop = PANres.RankSum.min()
 
-    for micro, macro in zip(_micro, _macro) if sliceSeparated else [(_micro, _macro)]:
-        for delta in [1] if shallow else micro:
+    for s, (micro, macro) in enumerate(zip(_micro, _macro)) if sliceSeparated else [(" ",(_micro, _macro))]:
+        for delta in (["dummy"] if shallow else micro):
             print(('' if shallow else f'Delta: {10**delta:3}\n') +
-                  f"\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t{''if not results else f'(Min Rank:{PANtop})'}")
+                  f"{s}\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t{''if not results else f'(Min Rank:{PANtop})'}")
             tmic = micro if shallow else micro[delta]
             tmac = macro if shallow else macro[delta]
             for t in tmic['P']:

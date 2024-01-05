@@ -62,7 +62,7 @@ class cp2dExperiment ():
     __frag_t = 'u4'
     __tok_t = 'u4'
 
-    def __init__(self, LZ77: bool = False, fragment: int = -1, authorLength: int = 0, window: int = -1, suffix: str = None, configFile: str = "", database: str = "", ngramSize: int = 0, leaveNout: int = 1, mantainSlicing: bool = True, allowPartial: bool = False, retrieve: bool = False, keepNonAlfabetical: bool = False, overwriteOutputs: bool = False, keepTemporary: bool = False, delta: float = 1, folds: int = 10, authorFiles: bool = False, P0file:str="", dumpP0:bool=False, **kwargs) -> None:
+    def __init__(self, LZ77: bool = False, fragment: int = -1, authorLength: int = 0, window: int = -1, suffix: str = None, configFile: str = "", database: str = "", ngramSize: int = 0, leaveNout: int = 1, mantainSlicing: bool = True, allowPartial: bool = False, retrieve: bool = False, keepNonAlfabetical: bool = False, overwriteOutputs: bool = False, keepTemporary: bool = False, delta: float = 1, folds: int = 10, authorFiles: bool = False, goodSlices = [], P0file:str="", dumpP0:bool=False, **kwargs) -> None:
         """
         Initializes the parameters for the analysis from command line options.
 
@@ -156,7 +156,7 @@ class cp2dExperiment ():
             self._create_experiment_directory()
             with open(os.path.join(self.__param['dataDir'], "parameters.json"), "a") as fp:
                 print(json.dumps({k: v for k, v in self.__param.items()
-                           if k is not "kwargs"}, default=support.numpy_json), end="\n", file=fp)
+                           if k != "kwargs"}, default=support.numpy_json), end="\n", file=fp)
 
             if self.__param['retrieve'] and not self.__foundResults:
                 self.retrieve()
@@ -510,7 +510,7 @@ class cp2dExperiment ():
 
             # compute
             numcomp.calprob(self.__param['dataDir'], self.__param['resultsDir'], outFile=self.__param["resultsName"], slicesize=self.__param['leaveNout'],
-                            ngram=self.__param['ngramSize'], fragment=self.__param['fragment'], authsize=self.__param['authorLength'], P0file=self.__param['P0file'], dumpP0=self.__param['dumpP0'])
+                            ngram=self.__param['ngramSize'], fragment=self.__param['fragment'], authsize=self.__param['authorLength'], goodSlices=self.__param['goodSlices'], P0file=self.__param['P0file'], dumpP0=self.__param['dumpP0'])
         except RuntimeError:
             sys.exit(1)
         finally:
@@ -686,36 +686,50 @@ class cp2dExperiment ():
                 set(ab[0] for ab in self.__attributions if ab[0] > 0))
             logger.info("Assigning texts")
             tret, slSep = logic.return_dict(
-                self.__attributions, self.__nonAttri, allowPartial, self.authors, sliceSeparated=self.__numSlices if sliceSeparated else False)
-            self.__unk.update(logic.assign_unknown(self.__attributions))
+                self.__attributions, self.__nonAttri, allowPartial, self.authors, sliceSeparated=self.__numSlices if (sliceSeparated and len(self.__param['goodSlices'])!=1) else False, goodSlices=self.__param['goodSlices'])
+            scoreDelta = [(d,tret[d]['all']['FNN']["micro"]["R"]) for d in tret]
+            bestDelta = max(scoreDelta, key=lambda x: x[1])[0]
+            self.__unk.update(logic.assign_unknown(self.__attributions, bestDelta))
             for nowDelta in logic._Q_missingDelta:
                 if margOut:
                     logger.info(f"Creating margOut files")
                     logic.print_margout(
                         self.__param['resultsDir'], self.__attributions, self.__nonAttri, nowDelta, allowPartial, tret, nowDelta)
 
-                if not machine:
+                if not machine and not self.__param['goodSlices']:
                     print(f"#########\n     {10**nowDelta}\n#########")
                     support.PAN11({ab: self.__attributions[ab][nowDelta] for ab in self.__attributions}, PANStyle,
-                                  groundTruth, othResult)
+                                  groundTruth, othResult, self.__numSlices if sliceSeparated else False, logic._Q_which_slice, self.authors)
                 if nowDelta not in ret:
                     logic.add_results_line(self.__param["dataDir"], tret[nowDelta], self.__nonAttri, allowPartial, nowDelta,
-                                           self.__unk[nowDelta], saveUnk=saveUnk, F=self.__param['fragment'], A=self.__param['authorLength'])
+                                           self.__unk[nowDelta], saveUnk=saveUnk, F=self.__param['fragment'], A=self.__param['authorLength'], goodSlices=self.__param['goodSlices'])
                     logic.add_results_line(
-                        self.__param["resultsDir"], tret[nowDelta], self.__nonAttri, allowPartial, nowDelta, self.__unk[nowDelta], saveUnk=saveUnk)
+                        self.__param["resultsDir"], tret[nowDelta], self.__nonAttri, allowPartial, nowDelta, self.__unk[nowDelta], saveUnk=saveUnk, goodSlices=self.__param['goodSlices'])
             ret.update(tret)
         for nowDelta in self._logDelta:
             if not machine:
                 print(f"#########\n     {10**nowDelta}\n#########")
                 print("   ", *list(ret[nowDelta].keys()), sep="\t")
-                for typ in ret[nowDelta]["all"]:
-                    print(
-                        typ, *[f"{ret[nowDelta][k][typ]*100:.4}%" for k in ret[nowDelta]], sep="\t")
-                if sliceSeparated and slSep:
-                    print(*[typ for typ in slSep[nowDelta][0]["all"]], sep="\t")
-                    for slres in slSep[nowDelta]:
-                        print(*[round(slres['all'][typ], 4)
-                              for typ in slres['all']], sep="\t")
+                for which in ret[nowDelta]:
+                    print(f'\n\n{which}:\n\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t', end="\n")
+                    for r in ret[nowDelta][which].items():
+                        if r[0] == "FRA":
+                            print(f"{r[0]}\t     \t{r[1]*100:.4}%", end="\n")
+                        else:
+                            print(r[0], *(f"{r[1]['micro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
+                                    *(f"{r[1]['macro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']), sep="\t")
+                if sliceSeparated and slSep is not None:
+                    for avg in ["micro", "macro"]:
+                        for measure in ["P", "R", "F"]:
+                            print(avg, measure)
+                            print("S",*[typ for typ in slSep[nowDelta][0]["all"]], sep="\t")
+                            for i, slres in enumerate(slSep[nowDelta]):
+                                if self.__param['goodSlices']:
+                                    print(self.__param['goodSlices'][i], end='\t')
+                                else:
+                                    print(i, end='\t')
+                                print(*[round(slres['all'][typ][avg][measure], 4) if typ!="FRA" else (round(slres['all'][typ], 4) if (avg, measure)==("micro", "R") else "---")
+                                    for typ in slres['all']], sep="\t")
 
         returnRet = None
         if machine:
@@ -780,7 +794,7 @@ class cp2dExperiment ():
                 if 0 in logic._Q_apt:
                     del logic._Q_apt[0]
 
-        if logic._Q_which_slice is None and (sliceSeparated or not (self.__flagbyte & self.__noauth)):
+        if logic._Q_which_slice is None and (sliceSeparated or not (self.__flagbyte & self.__noauth) or self.__param['goodSlices']):
             self.__numSlices = logic.loadSlices(os.path.join(self.__param['resultsDir'], "slices.bin"), self.__slice_t, self.__auth_t, self.__book_t)
                 
         if (self.__flagbyte & self.__noauth) and not sliceSeparated:

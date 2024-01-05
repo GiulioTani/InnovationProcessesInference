@@ -23,7 +23,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#define _P0_NORMALIZATION_ 0 /* -1 = uniform, 0 = fixed, 1 = normalize on author, 2 = normalize on author and fragment*/
+#define _P0_NORMALIZATION_ 1 /* -1 = uniform, 0 = fixed, 1 = normalize on author, 2 = normalize on author and fragment*/
 
 namespace bookprob
 {
@@ -240,6 +240,7 @@ namespace bookprob
     void book::init_tmpP0(const book &other) const
     {
         tmpP0 = std::vector<int>();
+        tmpP0.reserve(std::size_t(other.order.size()/2));
 #if _P0_NORMALIZATION_ > 0
         if (fixWeight < 0)
         {

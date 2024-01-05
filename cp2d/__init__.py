@@ -80,6 +80,7 @@ def main ():
     run_parser.add_argument('-v', action='store_true', dest="sliceSeparated",
                         help="Print separate statistics for every validation fold.")
     run_parser.add_argument('-a', type=str, help="Path to the author association file.", metavar='path', dest='association', default={})
+    run_parser.add_argument('-W', type=int, help="List of slices to be attributed (meaningful if a slicing is already present).", metavar="slices", dest="goodSlices", nargs='+', default=[])
     run_parser.set_defaults(func=elaboration.from_command_line)
 
     prepare_parser = subparsers.add_parser(

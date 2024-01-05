@@ -41,6 +41,7 @@ namespace be
         std::string inputFolderName = "", line, inputTrueName, prefix, outputFolderName;
         fs::path inputFolder;
         std::vector<std::vector<int>> fragments;
+        std::vector<int> slices;
         std::ostringstream fragname;
         std::ifstream inputfiles, inputseq;
         std::stringstream ss;
@@ -48,7 +49,7 @@ namespace be
         bool new_slices, dumpP0 = false;
         resuming = false;
 
-        while ((c = getopt(argc, argv, "f:F:o:p:t:s:d:n:P")) != -1 || argc == 0)
+        while ((c = getopt(argc, argv, "f:F:o:p:t:s:d:n:S:P")) != -1 || argc == 0)
         {
             switch (c)
             {
@@ -75,6 +76,9 @@ namespace be
                 break;
             case 'n':
                 asp::ngramSize = std::atoi(optarg);
+                break;
+            case 'S':
+                slices.push_back(std::atoi(optarg));
                 break;
             case 'P':
                 dumpP0 = true;
@@ -163,7 +167,7 @@ namespace be
 
         dump_and_process_aut_info();
 
-        authList.create(shelf_short, cake);
+        authList.create(shelf_short, cake, slices);
     }
 
     void base_experiment::read_books(const fs::path &inputFolder)
