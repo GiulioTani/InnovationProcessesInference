@@ -168,6 +168,7 @@ namespace be
         dump_and_process_aut_info();
 
         authList.create(shelf_short, cake, slices);
+        std::cout<<"Total fragments: "<< totFrag << std::endl;
     }
 
     void base_experiment::read_books(const fs::path &inputFolder)
@@ -184,6 +185,7 @@ namespace be
                                         "\nRecompile with a larger type for auth_id_t. " +
                                         std::to_string(file_names.size()));
 
+        totFrag = 0;
         for (auto i = 0; i < numThreads; i++)
         {
             tasks.emplace_back(std::async(std::launch::async, supp::read_books_from_file, std::ref(shelf_short), std::ref(shelf_long), std::ref(F), std::ref(file_names), std::ref(P0)));

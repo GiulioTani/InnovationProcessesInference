@@ -381,7 +381,7 @@ def StatsFromType (authorBooksTotal, authorCorrect, authorAssigned):
     recall[mask] = 0
     F1[mask] = 0
 
-    return {"micro":{"P":np.average(precision, weights=authorBooksTotal), "R":np.average(recall, weights=authorBooksTotal), "F":np.average(F1, weights=authorBooksTotal)}, "macro":{"P":np.average(precision, weights=mask2), "R":np.average(recall, weights=mask2), "F":np.average(F1, weights=mask2)}}
+    return {"weigh":{"P":np.average(precision, weights=authorBooksTotal), "R":np.average(recall, weights=authorBooksTotal), "F":np.average(F1, weights=authorBooksTotal)}, "macro":{"P":np.average(precision, weights=mask2), "R":np.average(recall, weights=mask2), "F":np.average(F1, weights=mask2)}}
 
 def assign_unknown(attributions, delta: float = None):
     unk = {}
@@ -601,7 +601,7 @@ def print_margout_summary_line(returnDict, file, which='all'):
         if r[0] == "FRA":
             print(f"{r[0]}\t     \t{r[1]*100:.4}%", end="\n", file=file)
         else:
-            print(r[0], *(f"{r[1]['micro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
+            print(r[0], *(f"{r[1]['weigh'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
                       *(f"{r[1]['macro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']), sep="\t", file=file)
     print("\n\n", file=file)
 

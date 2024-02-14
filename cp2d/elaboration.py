@@ -62,7 +62,7 @@ class cp2dExperiment ():
     __frag_t = 'u4'
     __tok_t = 'u4'
 
-    def __init__(self, LZ77: bool = False, fragment: int = -1, authorLength: int = 0, window: int = -1, suffix: str = None, configFile: str = "", database: str = "", ngramSize: int = 0, leaveNout: int = 1, mantainSlicing: bool = True, allowPartial: bool = False, retrieve: bool = False, keepNonAlfabetical: bool = False, overwriteOutputs: bool = False, keepTemporary: bool = False, delta: float = 1, folds: int = 10, authorFiles: bool = False, goodSlices = [], P0file:str="", dumpP0:bool=False, **kwargs) -> None:
+    def __init__(self, LZ77: bool = False, fragment: int = -1, authorLength: int = 0, window: int = -1, suffix: str = None, configFile: str = "", database: str = "", ngramSize: int = 0, leaveNout: int = 0, mantainSlicing: bool = True, allowPartial: bool = False, retrieve: bool = False, keepNonAlfabetical: bool = False, overwriteOutputs: bool = False, keepTemporary: bool = False, delta: float = 1, folds: int = 10, authorFiles: bool = False, goodSlices = [], P0file:str="", dumpP0:bool=False, **kwargs) -> None:
         """
         Initializes the parameters for the analysis from command line options.
 
@@ -687,7 +687,7 @@ class cp2dExperiment ():
             logger.info("Assigning texts")
             tret, slSep = logic.return_dict(
                 self.__attributions, self.__nonAttri, allowPartial, self.authors, sliceSeparated=self.__numSlices if (sliceSeparated and len(self.__param['goodSlices'])!=1) else False, goodSlices=self.__param['goodSlices'])
-            scoreDelta = [(d,tret[d]['all']['FNN']["micro"]["R"]) for d in tret]
+            scoreDelta = [(d,tret[d]['all']['FNN']["weigh"]["R"]) for d in tret]
             bestDelta = max(scoreDelta, key=lambda x: x[1])[0]
             self.__unk.update(logic.assign_unknown(self.__attributions, bestDelta))
             for nowDelta in logic._Q_missingDelta:
@@ -711,15 +711,15 @@ class cp2dExperiment ():
                 print(f"#########\n     {10**nowDelta}\n#########")
                 print("   ", *list(ret[nowDelta].keys()), sep="\t")
                 for which in ret[nowDelta]:
-                    print(f'\n\n{which}:\n\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t', end="\n")
+                    print(f'\n\n{which}:\n\t\tWeigh\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t', end="\n")
                     for r in ret[nowDelta][which].items():
                         if r[0] == "FRA":
                             print(f"{r[0]}\t     \t{r[1]*100:.4}%", end="\n")
                         else:
-                            print(r[0], *(f"{r[1]['micro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
+                            print(r[0], *(f"{r[1]['weigh'][measure]*100:.4}%" for measure in ['P', 'R', 'F']),
                                     *(f"{r[1]['macro'][measure]*100:.4}%" for measure in ['P', 'R', 'F']), sep="\t")
                 if sliceSeparated and slSep is not None:
-                    for avg in ["micro", "macro"]:
+                    for avg in ["weigh", "macro"]:
                         for measure in ["P", "R", "F"]:
                             print(avg, measure)
                             print("S",*[typ for typ in slSep[nowDelta][0]["all"]], sep="\t")
@@ -728,7 +728,7 @@ class cp2dExperiment ():
                                     print(self.__param['goodSlices'][i], end='\t')
                                 else:
                                     print(i, end='\t')
-                                print(*[round(slres['all'][typ][avg][measure], 4) if typ!="FRA" else (round(slres['all'][typ], 4) if (avg, measure)==("micro", "R") else "---")
+                                print(*[round(slres['all'][typ][avg][measure], 4) if typ!="FRA" else (round(slres['all'][typ], 4) if (avg, measure)==("weigh", "R") else "---")
                                     for typ in slres['all']], sep="\t")
 
         returnRet = None

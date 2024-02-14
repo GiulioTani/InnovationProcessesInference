@@ -921,7 +921,7 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
     for ab in attribution:
         sab = ab
         break
-    micro = [{} for __ in range(sliceSeparated)]
+    weigh = [{} for __ in range(sliceSeparated)]
     macro = [{} for __ in range(sliceSeparated)]
     for delta in [1] if shallow else attribution[sab]:
         stats = [{a: {"co": {"FNN": 0, "TOP": 0, "WP": 0, "MR": 0, "TMR": 0, "WMR": 0},
@@ -974,30 +974,30 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
                             (TB[AO[a], i]+s[a]['at'][t])
 
         for i, prf in enumerate(PRaF):
-            micro[i][delta] = {}
+            weigh[i][delta] = {}
             macro[i][delta] = {}
             for S in ['P', 'F', 'R']:
-                micro[i][delta][S] = {}
+                weigh[i][delta][S] = {}
                 macro[i][delta][S] = {}
                 for t in ["FNN", "TOP", "WP", "MR", "TMR", "WMR"]:
-                    micro[i][delta][S][t] = np.average([prf[a][S][t] for a in prf], weights=[
+                    weigh[i][delta][S][t] = np.average([prf[a][S][t] for a in prf], weights=[
                         prf[a]['a'] for a in prf])
                     macro[i][delta][S][t] = np.average(
                         [prf[a][S][t] for a in prf])
     if shallow:
-        micro = [micro[i][1] for i in range(sliceSeparated)]
+        weigh = [weigh[i][1] for i in range(sliceSeparated)]
         macro = [macro[i][1] for i in range(sliceSeparated)]
     if sliceSeparated == 1:
-        micro = micro[0]
+        weigh = weigh[0]
         macro = macro[0]
-    return micro, macro
+    return weigh, macro
 
 
-def print_PAN11(_micro, _macro, results=None, shallow=False, sliceSeparated: tp.Optional[int] = None):
-    """micro and macro averages results are those produced by PAN11_stats.
+def print_PAN11(_weigh, _macro, results=None, shallow=False, sliceSeparated: tp.Optional[int] = None):
+    """weigh and macro averages results are those produced by PAN11_stats.
         results is a (path to a) pandas DataFrame containing the results obtained in the
         PAN11 competition for comparison. The seven columns of interest are: RankSum and
-        Prec, Recall and F1 prefixed with m_ or M_ for micro and macro averages."""
+        Prec, Recall and F1 prefixed with m_ or M_ for weigh and macro averages."""
     if results:
         if isinstance(results, str):
             with open(results) as fp:
@@ -1015,20 +1015,20 @@ def print_PAN11(_micro, _macro, results=None, shallow=False, sliceSeparated: tp.
             macroPAN[S] = PANres[f"M_{colnames[S]}"].sort_values().to_numpy()
         PANtop = PANres.RankSum.min()
 
-    for s, (micro, macro) in enumerate(zip(_micro, _macro)) if sliceSeparated else [(" ",(_micro, _macro))]:
-        for delta in (["dummy"] if shallow else micro):
+    for s, (weigh, macro) in enumerate(zip(_weigh, _macro)) if sliceSeparated else [(" ",(_weigh, _macro))]:
+        for delta in (["dummy"] if shallow else weigh):
             print(('' if shallow else f'Delta: {10**delta:3}\n') +
                   f"{s}\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t{''if not results else f'(Min Rank:{PANtop})'}")
-            tmic = micro if shallow else micro[delta]
+            twei = weigh if shallow else weigh[delta]
             tmac = macro if shallow else macro[delta]
-            for t in tmic['P']:
-                print(t, *(round(tmic[S][t], 4) for S in ['P', 'R', 'F']),
+            for t in twei['P']:
+                print(t, *(round(twei['R'][t], 4) for S in ['P', 'R', 'F']),
                       *(round(tmac[S][t], 4) for S in ['P', 'R', 'F']), sep="\t", end="\t")
                 if results:
                     rankSum = 0
-                    for S in tmic:
+                    for S in twei:
                         rankSum += microPAN[S].size+1 - \
-                            np.searchsorted(microPAN[S], tmic[S][t])
+                            np.searchsorted(microPAN[S], twei['R'][t])
                         rankSum += macroPAN[S].size+1 - \
                             np.searchsorted(macroPAN[S], tmac[S][t])
                     print(rankSum)
@@ -1038,13 +1038,13 @@ def print_PAN11(_micro, _macro, results=None, shallow=False, sliceSeparated: tp.
 
 def PAN11(attributions, PANStyle="strict", groundTruth=None, othResult=None, sliceSeparated: tp.Optional[int] = None, slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None, authors: tp.Sequence[int] = None, shallow=True):
     if groundTruth:
-        micro, macro = PAN11_stats(
+        weigh, macro = PAN11_stats(
             attributions, PANStyle, groundTruth, shallow=shallow)
         print("Unknown:")
     else:
-        micro, macro = PAN11_stats(attributions, PANStyle, shallow=shallow,
+        weigh, macro = PAN11_stats(attributions, PANStyle, shallow=shallow,
                                    sliceSeparated=sliceSeparated, slices=slices, authors=authors)
         print("Known:")
-    print_PAN11(micro, macro, othResult, shallow=shallow,
+    print_PAN11(weigh, macro, othResult, shallow=shallow,
                 sliceSeparated=sliceSeparated)
-    return micro, macro
+    return weigh, macro

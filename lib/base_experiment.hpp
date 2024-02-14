@@ -48,7 +48,7 @@ namespace be
         std::map<dt::auth_id_t, dt::book_id_t> main_parts;
         std::vector<supp::slice> cake;
         fs::path outputFolderPath;
-        int totFrag;
+        size_t totFrag;
         std::unordered_map<std::pair<dt::auth_id_t, dt::book_id_t>, std::pair<double, double>, supp::my_hash<dt::auth_id_t, dt::book_id_t>> params;
         std::set<std::pair<dt::auth_id_t, dt::slice_id_t>> known_par, computing_par;
         long int numThreads = -2000000000 /**< Number of threads to use.*/, F = -2000000000 /**< Number of tokens in fragmen*/;
