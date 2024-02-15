@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <regex>
 #include <cmath>
+#include <unistd.h>
 // #include <algorithm>
 #define _USE_JOINT_PARAMS_
 // #define _USE_BOOK_COUNTS_

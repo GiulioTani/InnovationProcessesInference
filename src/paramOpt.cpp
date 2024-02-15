@@ -38,6 +38,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
+#include <unistd.h>
 
 #define ST_THETA 1000
 #define ST_ALPHA 0.3
