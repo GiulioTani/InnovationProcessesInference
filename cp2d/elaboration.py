@@ -930,5 +930,9 @@ def from_command_line(margOut=False, sliceSeparated=False, association={}, **kwa
 
     exp = cp2dExperiment(**kwargs)
     exp.run()
+    if os.path.isfile(os.path.join(kwargs["database"], "groundTruth.json")):
+        groundTruth = os.path.join(kwargs["database"], "groundTruth.json")
+    else:
+        groundTruth = None
     exp.results(margOut=margOut, machine=False,
-                PANStyle="strict", sliceSeparated=sliceSeparated, association=association)
+                PANStyle="strict", sliceSeparated=sliceSeparated, association=association, groundTruth=groundTruth)
