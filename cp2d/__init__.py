@@ -19,6 +19,7 @@
 import argparse
 import os
 from . import support, elaboration
+from .elaboration import cp2dExperiment
 
 
 def main ():

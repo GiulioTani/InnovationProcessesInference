@@ -79,6 +79,7 @@ int main(int argc, char **argv)
     {
         std::cout << "No precomputed results found." << std::endl;
     }
+    timer_tot.reset();
 
     exp.run();
 
@@ -86,6 +87,8 @@ int main(int argc, char **argv)
     {
         exp.order();
     }
+    
+    std::cout << "Main computation : " << std::fixed << std::setprecision(3) << timer_tot.elapsed() << std::endl;
 
     if (!bp::missing_words.empty())
     {
