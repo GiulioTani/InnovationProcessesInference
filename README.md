@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/678961833.svg)](https://zenodo.org/doi/10.5281/zenodo.12163217)
 # Innovation Processes for Inference
 
 This repository contains the code associated to [Innovation Processes for Inference (2023)](https://arxiv.org/abs/2306.05186) by G. Tani Raffaelli, M. Lalli, and F. Tria
