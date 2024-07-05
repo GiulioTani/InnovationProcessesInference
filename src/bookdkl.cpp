@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -115,10 +115,10 @@ namespace bookprob
         return {P / log(10), rest}; // to have the logarithm in base 10
     };
 #else
-        P -= log(N / (theta + N));                            // CROSSENTROPY
+        P -= log(N / (theta + N));   // CROSSENTROPY
         return {P / log(10), -rest}; // to have the logarithm in base 10
     };
-#endif  
+#endif
     size_t dkl_book::retsize() const
     {
         return sizeof(double) + sizeof(double);

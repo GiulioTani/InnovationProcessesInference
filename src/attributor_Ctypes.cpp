@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -31,7 +31,7 @@
 
 /**
  * @brief Loads the probabilities and number of new tokens per fragment to allow attribution.
- * 
+ *
  * The input data are the 'pro' files produced by base_experiment.
  * Format of the loaded data (output):
  * - 1 double: number of authors (n);
@@ -39,14 +39,14 @@
  * - for every author part:
  * -  for every book fragment:
  * -   2 doubles: probability per token of the fragment (with delta =1), fraction of new tokens.
- * 
+ *
  * Return codes:
  * - 0, no error.
  * - 1, failed opening file.
  * - 2, file ended before expected.
  * - 3, other I/O error.
  * - 4, uncaught exception.
- * 
+ *
  * @param data Structure containing the information for data loading.
  * @param results Pointer to the memory that will contain the data for attribution with attribute().
  * @return int Return code for error notification to python (positive numbers) or the number of authors (negative numbers).
@@ -56,7 +56,7 @@ int load(struct dataLoad data, double **results)
     try
     {
         std::ifstream inputFile;
-        if (data.bucket < 1000)/*results in multiple buckets, recover bucket file name.*/
+        if (data.bucket < 1000) /*results in multiple buckets, recover bucket file name.*/
         {
             std::stringstream padnum;
             padnum.clear();
@@ -68,7 +68,7 @@ int load(struct dataLoad data, double **results)
             inputFile.open(data.fname + std::string(".res"), std::ifstream::binary);
         std::vector<double> pro = std::vector<double>(data.ncids * data.fn, 0);
         std::vector<double> wc = std::vector<double>(data.ncids * data.fn, 0);
-        const int recorLen = sizeof(double) + (data.F == 1 ? sizeof(double) : sizeof(dt::diff_tok_t)); //records may contain the probability of the fragment and the number of new tokens or, when using single token fragments, the fraction of new tokens.
+        const int recorLen = sizeof(double) + (data.F == 1 ? sizeof(double) : sizeof(dt::diff_tok_t)); // records may contain the probability of the fragment and the number of new tokens or, when using single token fragments, the fraction of new tokens.
         int infcheck, oldcid = -1, sgood = 0, length = data.N * recorLen;
         bool orderauth = true;
         double *_results;
@@ -205,17 +205,17 @@ int load(struct dataLoad data, double **results)
 /**
  * @brief Attributes books to authors.
  * Given the results loaded with load() and a value of delta assign the books to the authors in 2 to 6 different ways.
- * 
+ *
  * Format of the output in procssed:
  * It contains the results for every author in sequence, ordered by descending FNN probability. For every author it contains:
  * - dt::auth_id_t, the id number of the author.
  * - 3*double, the probability according to FNN (or Maximum Likelihood), TOP (the best of the author slices), and WP (weighted average of the author slices).
  * - 3*int, the number of fragments assigned to the author according to MR, TMR (TOP majority rule), and WMR (Weighted profile majority rule).
- * 
+ *
  * Return codes:
  * - 4, uncaught exception.
  * - -n, minus the number of authors to help parsing the output.
- * 
+ *
  * @param results Pointer to the results loaded with load(), see for the structure.
  * @param fn Number of fragments of the book.
  * @param delta Value of delta for the attribution.
@@ -378,7 +378,7 @@ int attribute(double *results, long fn, double delta, char **processed)
 }
 /**
  * @brief Simple interface to free() for cleaning the memory.
- * 
+ *
  * @param data Pointer to the memory to free.
  */
 void clean(void *data)

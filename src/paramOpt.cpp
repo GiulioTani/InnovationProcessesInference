@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -22,7 +22,7 @@
  * is an element of a PD Process.
  * @version 1.0
  * @date 2023-06-27
- * 
+ *
  * @copyright Copyright (c) 2023
  *
  */
@@ -81,19 +81,19 @@ namespace popt
   }
 
   /**
- * @brief Stores in alpha and theta the
- *   \f[
- *       arg \max_{\alpha,theta}  \frac{(\theta |
- * \alpha)_K}{(\theta)_N}\prod_{k=1}^K (1-\alpha)_{n_k-1} \f] Where \f$ N \f$ is
- * the total number of elements and \f$ K \f$ is the total number of differents
- * elements.
- *
- * @param[in] N Total number of elements.
- * @param[in] T Total number of differents elements.
- * @param[in] nconk Number of occurrences of each different word.
- * @param[in,out] theta Theta parameter of the PD Process.
- * @param[in,out] alpha Alpha parameter of the PD Process.
- */
+   * @brief Stores in alpha and theta the
+   *   \f[
+   *       arg \max_{\alpha,theta}  \frac{(\theta |
+   * \alpha)_K}{(\theta)_N}\prod_{k=1}^K (1-\alpha)_{n_k-1} \f] Where \f$ N \f$ is
+   * the total number of elements and \f$ K \f$ is the total number of differents
+   * elements.
+   *
+   * @param[in] N Total number of elements.
+   * @param[in] T Total number of differents elements.
+   * @param[in] nconk Number of occurrences of each different word.
+   * @param[in,out] theta Theta parameter of the PD Process.
+   * @param[in,out] alpha Alpha parameter of the PD Process.
+   */
   void gradient_ascent(int N, int T, const std::vector<int> &nconk, double *theta,
                        double *alpha)
   {
@@ -241,23 +241,23 @@ namespace popt
   }
 
   /**
- * @brief Computes the derivative of log(P) with respect to alpha. Using the
- * formula: \f[ \partial_{\alpha}P \propto \sum_{i=0}^{T-1} \frac{i}{\theta +
- * \alpha i} - \sum_{k=1}^K \sum_{\nu\in [1,n_k-1]} \frac{ 1}{\nu-\alpha} \f]
- *
- *    For optimization purposes (avoiding nested cycles) the formula isn't used
- * as it is but the terms with equal \f$ n_k \f$ are grouped together and all
- * the sums are computed in a row. This trick reduces the execution time by
- * roughly two thirds.
- *
- * @param T Total number of differents elements.
- * @param Counter A map pairing the number of occurrences of a word and the
- * number of words sharing the same number of occurrences.
- * @param maxnk Nuber of occurrences of the most common word(s).
- * @param theta Present value of the theta parameter of the PD Process.
- * @param alpha Present value of the alpha parameter of the PD Process.
- * @return double The value of the derivative.
- */
+   * @brief Computes the derivative of log(P) with respect to alpha. Using the
+   * formula: \f[ \partial_{\alpha}P \propto \sum_{i=0}^{T-1} \frac{i}{\theta +
+   * \alpha i} - \sum_{k=1}^K \sum_{\nu\in [1,n_k-1]} \frac{ 1}{\nu-\alpha} \f]
+   *
+   *    For optimization purposes (avoiding nested cycles) the formula isn't used
+   * as it is but the terms with equal \f$ n_k \f$ are grouped together and all
+   * the sums are computed in a row. This trick reduces the execution time by
+   * roughly two thirds.
+   *
+   * @param T Total number of differents elements.
+   * @param Counter A map pairing the number of occurrences of a word and the
+   * number of words sharing the same number of occurrences.
+   * @param maxnk Nuber of occurrences of the most common word(s).
+   * @param theta Present value of the theta parameter of the PD Process.
+   * @param alpha Present value of the alpha parameter of the PD Process.
+   * @return double The value of the derivative.
+   */
   double der_alpha(int T, const std::unordered_map<int, int> &Counter,
                    double theta, double alpha)
   {
@@ -271,16 +271,16 @@ namespace popt
   }
 
   /**
- * @brief Computes the derivative of log(P) with respect to theta. Using the
- * formula: \f[ \partial_{\theta}P\propto \sum_{i=0}^{T-1} \frac{1}{\theta +
- * \alpha i} - \sum_{i=0}^{N-1} \frac{1}{\theta + i} \f]
- *
- * @param N Total number of elements.
- * @param T Total number of differents elements.
- * @param theta Present value of the theta parameter of the PD Process.
- * @param alpha Present value of the alpha parameter of the PD Process.
- * @return double The value of the derivative.
- */
+   * @brief Computes the derivative of log(P) with respect to theta. Using the
+   * formula: \f[ \partial_{\theta}P\propto \sum_{i=0}^{T-1} \frac{1}{\theta +
+   * \alpha i} - \sum_{i=0}^{N-1} \frac{1}{\theta + i} \f]
+   *
+   * @param N Total number of elements.
+   * @param T Total number of differents elements.
+   * @param theta Present value of the theta parameter of the PD Process.
+   * @param alpha Present value of the alpha parameter of the PD Process.
+   * @return double The value of the derivative.
+   */
   double der_theta(int N, int T, double theta, double alpha)
   {
     double sumleft = 0, sumright = 0;

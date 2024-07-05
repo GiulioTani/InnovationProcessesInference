@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -144,7 +144,7 @@ int huff_length(int nn, int *freq, int *lungZ)
     int fre;
     int figlio;
     int ind;
-  } * nod;
+  } *nod;
   int i, j, k, n, nj;
   int m1, m2, n_nod;
   int *ind;
@@ -461,7 +461,7 @@ int carica_file_p(char *nome_dir_p)
   nome = (char *)malloc(sizeof(char[LUNGNOME]));
   nome_ris = (char *)malloc(sizeof(char[LUNGPATHNOME]));
 
-  //do not remove previous results
+  // do not remove previous results
   strcpy(tmp_nome, "rm -rf ");
   strcat(tmp_nome, nome_dir_p);
   strcat(tmp_nome, RIS);
@@ -579,7 +579,7 @@ int carica_file_g(char *nome_dir_g)
     exit(1);
   };
 
-  /* n e' il numero di file nella directory, 
+  /* n e' il numero di file nella directory,
      Ng e' variabile globale che contiene il numero di testi= file regolari
      che non siano NASCOSTI (non cominciano con .)
   */
@@ -597,7 +597,7 @@ int carica_file_g(char *nome_dir_g)
       G[Ng].lung = (unsigned short int)MIN(GRANDE, (int)stbuf.st_size);
       strcpy(G[Ng].path_nome, tmp_nome);
       strcpy(G[Ng].nome, namelist[i]->d_name);
-      /* alloco la parte della struttura necessaria. 
+      /* alloco la parte della struttura necessaria.
         pieno di WARNIG non capisco qual e' il modo corretto */
       G[Ng].indice = (unsigned short int *)
           calloc((int)G[Ng].lung + 1, sizeof(unsigned short int));
@@ -607,7 +607,7 @@ int carica_file_g(char *nome_dir_g)
       {
         err = 1;
       };
-      /* carica il file e ne costruisce la copia a forma di indici e 
+      /* carica il file e ne costruisce la copia a forma di indici e
         gli indici delle ultime occorrenze dei caratteri. */
       ifp = open(tmp_nome, O_RDONLY);
       if (ifp == -1)
@@ -639,7 +639,7 @@ int carica_file_g(char *nome_dir_g)
       };
       if (err > 0)
       {
-        /* errore 1 (grave) non alloca 
+        /* errore 1 (grave) non alloca
           errore 2 (strano) non apre il file, forse protetto?
           errore 3 (non errore) il file e' vuoto
         */

@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -20,7 +20,7 @@
  * @brief Functions' bodies for supportlib and globals definition.
  * @version 1.0
  * @date 2023-06-27
- * 
+ *
  * @copyright Copyright (c) 2023
  *
  */
@@ -121,7 +121,7 @@ namespace supp
             for (auto i : slices)
                 cake_part.push_back(cake[i]);
         else
-            for (auto& slice : cake)
+            for (auto &slice : cake)
                 cake_part.push_back(slice);
 
         if (created)
@@ -307,7 +307,8 @@ namespace supp
         std::cout << "Loaded P0" << std::endl;
     }
 
-    void hash_combine(size_t & seed, size_t const& v){
+    void hash_combine(size_t &seed, size_t const &v)
+    {
         seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
 
