@@ -1252,7 +1252,7 @@ class cp2dExperiment:
                     if self._is_good_candidate(old_param):
                         if os.path.isdir(os.path.join(name, "seq")):
                             goodones[name] = 2
-                        if pieces[3] in name:
+                        if pieces[3][:-1] in name:
                             goodones[name] = goodones.get(name, 0) + 1
         if goodones:
             # selecting the most complete candidate
