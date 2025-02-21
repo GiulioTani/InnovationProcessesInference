@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 {
     supp::Timer timer_tot;
     size_t prev_res;
-    be::base_experiment exp(argc, argv);
+    be::base_experiment experiment(argc, argv);
     /* Initialization */
     supp::catch_signals();
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     std::cout << "Init  queue : " << std::fixed << std::setprecision(3) << timer_tot.elapsed() << " s" << std::endl;
 
     timer_tot.reset();
-    prev_res = exp.load_prev_results();
+    prev_res = experiment.load_prev_results();
     if (prev_res)
     {
         std::cout << "Init  written : " << std::fixed << std::setprecision(3) << timer_tot.elapsed() << " s. Found " << prev_res << " precomputed results." << std::endl;
@@ -81,11 +81,11 @@ int main(int argc, char **argv)
     }
     timer_tot.reset();
 
-    exp.run();
+    experiment.run();
 
     if (supp::FLAG)
     {
-        exp.order();
+        experiment.order();
     }
 
     std::cout << "Main computation : " << std::fixed << std::setprecision(3) << timer_tot.elapsed() << std::endl;

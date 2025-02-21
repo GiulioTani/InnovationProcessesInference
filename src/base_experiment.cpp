@@ -85,7 +85,7 @@ namespace be
                 dumpP0 = true;
                 break;
             default:
-                std::cerr << "Unknown option: \"" << c << "\"\nUsage: fragprob -f [input folder name] (-o [output file name])." << std::endl;
+                std::cerr << "Unknown option: \"" << c << "\"\nUsage: fragprob -f [input folder name] (-o [output file name]) (-F [frag len]) (-p [P0 file name]) (-t [num threads]) (-s [slice size]) (-d [auth frag len]) (-n [ngram len]) (-S [slices to compute]) (-P)." << std::endl;
                 exit(EXIT_FAILURE);
                 break;
             }
