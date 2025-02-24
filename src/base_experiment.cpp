@@ -47,7 +47,7 @@ namespace be
         std::ifstream inputfiles, inputseq;
         std::stringstream ss;
         P0.count = -100;
-        bool new_slices, dumpP0 = false;
+        bool new_slices, dumpP0 = false, dumpDetail = false;
         resuming = false;
 
         while ((c = getopt(argc, argv, "f:F:o:p:t:s:d:n:S:P")) != -1 || argc == 0)
@@ -83,6 +83,9 @@ namespace be
                 break;
             case 'P':
                 dumpP0 = true;
+                break;
+            case 'D':
+                dumpDetail = true;
                 break;
             default:
                 std::cerr << "Unknown option: \"" << c << "\"\nUsage: fragprob -f [input folder name] (-o [output file name]) (-F [frag len]) (-p [P0 file name]) (-t [num threads]) (-s [slice size]) (-d [auth frag len]) (-n [ngram len]) (-S [slices to compute]) (-P)." << std::endl;
@@ -141,6 +144,13 @@ namespace be
         /* Check output file or creates a default output file if needed*/
         outputFile = (outputFolderPath / std::string("tmpres")).string();
         std::cout << "Saving results in: " << outputFile << std::endl;
+        if (dumpDetail && (slices.size() == 0 || slices.size() > 1))
+            throw std::invalid_argument("Dumping of detailed statistics is allowed for a single slice only.");
+        if (dumpDetail)
+        {
+            supp::dumpHashAssociation = true;
+            dumpP0 = true;
+        }
 
         read_books(inputFolder);
 
@@ -742,6 +752,8 @@ namespace be
             output_pro[i].close();
         }
         outpar.close();
+        if (supp::dumpHashAssociation)
+            supp::dumpHashes(outputFolderPath / std::string("dumps"));
     }
 
     void base_experiment::worker(supp::result_box &results, supp::list_manager &authList)
@@ -910,13 +922,17 @@ namespace be
             // Compare all the fragments of the author
             my_results = std::vector<unsigned char>(shelf_short.at(job.aut2).at(job.book).size() * this_comp.comp_frag_num * res_len);
             pos_now = my_results.data();
+            dt::frag_id_t count_frag=0;
+            dt::frag_label frag_label={{0,0,0},0,0};
             for (auto &fragm1 : newAuthors)
             {
+                count_frag=0;
                 for (auto &fragm2 : shelf_short.at(job.aut2).at(job.book))
                 {
+                    if (supp::dumpHashAssociation)frag_label={job, fragm1.first, count_frag++};
                     try
                     {
-                        fragm1.second->log_prob_to_chararr(*fragm2, pos_now);
+                        fragm1.second->log_prob_to_chararr(fragm1.second->log_prob(*fragm2, frag_label), pos_now);
                     }
                     catch (bp::word_miss &e)
                     {

@@ -60,7 +60,91 @@ namespace bookprob
         cache_valid = true;
     };
 
-    std::pair<double, double> dkl_book::log_prob(const book &other) const
+    std::pair<double, double> dkl_book::log_prob(const book &other, dt::frag_label label) const
+    {
+        if (!supp::dumpHashAssociation)
+            return plain_log_prob(other);
+        const dkl_book &other_ = other;
+        double P = 0;
+        dt::contrib_type contributions;
+        double rest = 0;
+        if (other_.order.size() == 0)
+            throw not_init("Other order " + other_.prefix);
+        if (order.size() == 0)
+            throw not_init("order");
+        if (positions.size() == 0)
+            throw not_init("positions");
+        if (P0 == NULL)
+            throw not_init("P0");
+        if (alpha == -100)
+            throw not_init("alpha");
+        if (theta == -100)
+            throw not_init("theta");
+        if (other_.prefix == "" || prefix == "")
+            throw not_init("prefix");
+        if (!cache_valid)
+            build_cache();
+        if (!other_.cache_valid)
+            other_.build_cache();
+        init_tmpP0(other);
+        for (auto &p : other_.frequency)
+        {
+            if (positions.find(p.first) != positions.end())
+#ifdef CROSSENTROPY
+            {
+                contributions.push_back({p.first, p.second * log(frequency[positions.at(p.first)].second - corr)});
+                P += contributions.back().second;
+            } // if the word was already in my vocabulary
+#else
+            {
+                contributions.push_back({p.first, p.second * (log(p.second) - log(frequency[positions.at(p.first)].second - corr))});
+                P += contributions.back().second;
+            } // if the word was already in my vocabulary
+#endif // CROSSENTROPY
+            else
+            {
+                try
+                {
+#ifdef CROSSENTROPY
+                    contributions.push_back({p.first, -p.second * log(factP0 * P0->prob.at(p.first) / nowWeight)});
+#else
+                    contributions.push_back({p.first, -p.second * (log(p.second) - log(factP0 * P0->prob.at(p.first) / nowWeight))});
+#endif // CROSSENTROPY
+                    P += -contributions.back().second;
+                    rest += p.second;
+                }
+                catch (std::out_of_range &e)
+                {
+                    std::cerr << prefix << " | " << other_.prefix << " | "
+                              << " \"" << p.first << "\"" << std::endl;
+                    throw word_miss(std::to_string(p.first));
+                }
+            }
+        }
+#ifdef CROSSENTROPY
+        P += log(N / (theta + N));
+        contributions.push_back({1, N});
+        contributions.push_back({1, 0});
+        contributions.push_back({1, 0});
+        contributions.push_back({1, 0});
+        try
+        {
+            std::lock_guard<std::mutex> ls(contrib_lock);
+            contributions_global.push_back({label, contributions});
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+        return {P / log(10), rest}; // to have the logarithm in base 10
+    };
+#else
+        P -= log(N / (theta + N));
+        return {P / log(10), -rest}; // to have the logarithm in base 10
+    };
+#endif // CROSSENTROPY
+
+    std::pair<double, double> dkl_book::plain_log_prob(const book &other) const
     {
         const dkl_book &other_ = other;
         double P = 0;
@@ -125,18 +209,17 @@ namespace bookprob
         return sizeof(double) + sizeof(double);
     };
 
-    void dkl_book::log_prob_to_chararr(void *dest) const
-    {
-        constexpr std::array<unsigned char, 8> bb{0, 0, 0, 0, 0, 0, 240, 255};
-        constexpr double dd = 0;
-        memcpy(dest, &bb, sizeof(bb));
-        memcpy((char *)dest + sizeof(bb), &dd, sizeof(dd));
-    };
+    // void dkl_book::log_prob_to_chararr(void *dest) const
+    // {
+    //     constexpr std::array<unsigned char, 8> bb{0, 0, 0, 0, 0, 0, 240, 255};
+    //     constexpr double dd = 0;
+    //     memcpy(dest, &bb, sizeof(bb));
+    //     memcpy((char *)dest + sizeof(bb), &dd, sizeof(dd));
+    // };
 
-    void dkl_book::log_prob_to_chararr(const book &other, void *dest) const
-    {
-        auto tmp = log_prob(other);
-        memcpy(dest, &tmp.first, sizeof(tmp.first));
-        memcpy((char *)dest + sizeof(tmp.first), &tmp.second, sizeof(tmp.second));
-    };
+    // void dkl_book::log_prob_to_chararr(std::pair<double, double> prob, void *dest) const
+    // {
+    //     memcpy(dest, &prob.first, sizeof(prob.first));
+    //     memcpy((char *)dest + sizeof(prob.first), &prob.second, sizeof(prob.second));
+    // };
 } // namespace bookprob

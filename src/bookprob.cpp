@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -30,6 +30,9 @@ namespace bookprob
 {
     std::unordered_map<dt::hash_type, std::string> missing_words;
     std::mutex missing_words_lock;
+    std::vector<std::pair<dt::frag_label, dt::contrib_type>> contributions_global;
+    std::mutex contrib_lock;
+    
     book::book(const book &oth)
     {
         alpha = oth.alpha;
@@ -194,7 +197,72 @@ namespace bookprob
         return {P / log(10), dt::diff_tok_t(tmpP0.size())}; // to have the logarithm in base 10
     };
 
-    std::pair<double, dt::diff_tok_t> book::log_prob(const book &other) const
+    std::pair<double, dt::diff_tok_t> book::log_prob(const book &other, dt::frag_label label) const
+    {
+        if (!supp::dumpHashAssociation)
+            return plain_log_prob(other);
+        double P = 0;
+        dt::contrib_type contributions;
+        if (other.order.size() == 0)
+            throw not_init("Other order " + other.prefix);
+        if (order.size() == 0)
+            throw not_init("order");
+        if (positions.size() == 0)
+            throw not_init("positions");
+        if (P0 == NULL)
+            throw not_init("P0");
+        if (alpha == -100)
+            throw not_init("alpha");
+        if (theta == -100)
+            throw not_init("theta");
+        if (other.prefix == "" || prefix == "")
+            throw not_init("prefix");
+        init_tmpP0(other);
+        for (auto &p : other.order)
+        {
+            if (positions.find(p.first) != positions.end())
+            {
+                contributions.push_back({p.first, lgamma(p.second + order[positions.at(p.first)].second - alpha) - lgamma(order[positions.at(p.first)].second - alpha)});
+                P += contributions.back().second;
+            } // if the word was already in my vocabulary
+            else
+            {
+                if (p.second > 1)
+                    {contributions.push_back({p.first, -(lgamma(p.second - alpha) - lgamma(1 - alpha))});
+                        P += -contributions.back().second; }// if the word is new
+                try
+                {
+                    tmpP0.push_back(P0->prob.at(p.first)); // getting counts of all the words in my dictionary
+                }
+                catch (std::out_of_range &e)
+                {
+                    std::cerr << prefix << " | " << other.prefix << " | "
+                              << " \"" << p.first << "\"" << std::endl;
+                    throw word_miss(std::to_string(p.first));
+                }
+            }
+        }
+        P += log(alpha) * (int)tmpP0.size() + lgamma(theta / alpha + (int)order.size() + (int)tmpP0.size()) - lgamma(theta / alpha + (int)order.size());
+        P -= lgamma(theta + N + other.N) - lgamma(theta + N);
+        P += logP_words(contributions);
+        contributions.push_back({1, N});
+        contributions.push_back({1, other.N});
+        contributions.push_back({1, tmpP0.size()});
+        contributions.push_back({1, order.size()});
+        try
+        {
+            std::lock_guard<std::mutex> ls(contrib_lock);
+            contributions_global.push_back({label, contributions});
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+        
+        return {P / log(10), dt::diff_tok_t(tmpP0.size())}; // to have the logarithm in base 10
+    };
+
+    std::pair<double, dt::diff_tok_t> book::plain_log_prob(const book &other) const
     {
         double P = 0;
         if (other.order.size() == 0)
@@ -311,16 +379,33 @@ namespace bookprob
         return p;
     };
 
+    double book::logP_words(std::vector<std::pair<dt::hash_type, double>>& contributions) const
+    {
+#if _P0_NORMALIZATION_ < 0
+        return tmpP0.size() * log(1. / nowWeight);
+        throw std::runtime_error("Not quitted.");
+#endif
+        double p = 0;
+        for (auto molt : tmpP0)
+        {
+            contributions.push_back({0, -log((double)molt / nowWeight)});
+            p += -contributions.back().second;
+#if _P0_NORMALIZATION_ > 1
+            nowWeight -= molt;
+#endif
+        }
+        return p;
+    };
+
     size_t book::retsize() const
     {
         return sizeof(double) + sizeof(dt::diff_tok_t);
     };
 
-    void book::log_prob_to_chararr(const book &other, void *dest) const
+    void book::log_prob_to_chararr(std::pair<double, double> prob, void *dest) const
     {
-        auto tmp = log_prob(other);
-        memcpy(dest, &tmp.first, sizeof(tmp.first));
-        memcpy((char*)dest + sizeof(tmp.first), &tmp.second, sizeof(tmp.second));
+        memcpy(dest, &prob.first, sizeof(prob.first));
+        memcpy((char *)dest + sizeof(prob.first), &prob.second, sizeof(prob.second));
     };
 
     void book::log_prob_to_chararr(void *dest) const

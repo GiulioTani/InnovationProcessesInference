@@ -50,7 +50,11 @@ namespace supp
 {
     bool FLAG = true;  /**< Activates the controlled shutdown when the first SIGINT arrives. */
     bool NOHUP = true; /**< Makes the signal handler ignore the first SIGHUP.*/
+    bool dumpHashAssociation; /**< Dumps the hash association to a file. */
+    std::unordered_map<dt::hash_type, std::string> masterHashAssociation;
+    std::mutex hashAssociation_lock;
     std::mutex shelf_lock, queue_lock;
+
     task_iterator::task_iterator(dt::auth_id_t aid, std::vector<std::reference_wrapper<const supp::slice>> cake_part, size_t size) : my_auth(aid), cakelist(cake_part), _size(size)
     {
         if (!_size)
@@ -398,6 +402,7 @@ namespace supp
         std::unordered_map<dt::book_id_t, std::vector<std::unique_ptr<bp::book>>> tmp_short;
         std::filesystem::path inputFile;
         std::hash<std::string> hasher;
+        std::unordered_map<dt::hash_type, std::string> hashAssociation;
         while (!inputFiles.empty())
         {
             try
@@ -435,7 +440,11 @@ namespace supp
                     tmp_splitBook = asp::split(" " + line + " ", asp::ngramSize);
                     splitBook.reserve(tmp_splitBook.size());
                     for (auto &w : tmp_splitBook)
+                    {
                         splitBook.push_back(hasher(w));
+                        if (dumpHashAssociation)
+                            hashAssociation[hasher(w)] = w;
+                    }
                     tmp_long[B] = splitBook;
                     if (splitBook.empty())
                     {
@@ -515,11 +524,52 @@ namespace supp
             }
             catch (const std::exception &e)
             {
-                std::cerr << e.what() << '\n';
+                std::cerr << "Error:" << e.what() << '\n';
+            }
+        }
+        if (dumpHashAssociation)
+        {
+            try
+            {
+                std::lock_guard<std::mutex> sl(hashAssociation_lock);
+                for (auto &p : hashAssociation)
+                    masterHashAssociation[p.first] = p.second;
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Error:" << e.what() << '\n';
             }
         }
 
         return totFrag;
+    }
+
+    void dumpHashes(std::filesystem::path outputFile){
+        std::ofstream output(outputFile.string()+"_hashes.txt");
+        if (output)
+        {
+            for (auto p : masterHashAssociation)
+                output << p.first << "\t" << p.second << std::endl;
+            output.close();
+        }
+        else
+            throw std::runtime_error("Could not open hash association output file");
+        
+        output.open(outputFile.string()+"_contributions.txt");
+        if (output)
+        {
+            for (auto p : bp::contributions_global)
+            {
+                output << "####FRAGMENT####\nAuth1: "<<p.first.task_id.aut1<<"\nAuth2: "<<p.first.task_id.aut2<<"\nBook: "<<p.first.task_id.book<<"\nAuthFrag: "<<p.first.aut_frag<<"\nFrag: "<<p.first.frag<<std::endl;
+                output << "AuthN: "<<(p.second.end()-4)->second<<"\nFragN: "<<(p.second.end()-3)->second<<"\nNewTokens: "<<(p.second.end()-2)->second<<"\nKnownTokens: "<<(p.second.end()-1)->second<<std::endl;
+                for (unsigned i=0; i<p.second.size()-4; i++)
+                    output << p.second[i].first<< "\t"<< p.second[i].second << std::endl;
+            }
+            output.close();
+        }
+        else
+            throw std::runtime_error("Could not open hash association output file");
+
     }
 
     std::string nicetime(int t)

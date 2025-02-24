@@ -37,9 +37,10 @@ namespace bookprob
         dkl_book(const std::vector<std::pair<dt::hash_type, int>> &ord, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "") : book(ord, inP0, Alpha, Theta, pref) { cache_valid = false; };
         dkl_book join(const dkl_book &other) const { return book::join(other); };
         void append(const book &other);
-        std::pair<double, double> log_prob(const book &other) const;
+        std::pair<double, double> log_prob(const book &other, dt::frag_label label) const;
+        std::pair<double, double> plain_log_prob(const book &other) const;
         size_t retsize() const;
-        virtual void log_prob_to_chararr(const book &other, void *dest) const;
-        void log_prob_to_chararr(void *dest) const;
+        // virtual void log_prob_to_chararr(std::pair<double, double> prob, void *dest) const;
+        // void log_prob_to_chararr(void *dest) const;
     };
 }

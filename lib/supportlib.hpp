@@ -56,6 +56,9 @@ namespace supp
 {
     extern bool FLAG;                /**< Activates the controlled shutdown when the first SIGINT arrives. */
     extern bool NOHUP;               /**< Makes the signal handler ignore the first SIGHUP.*/
+    extern bool dumpHashAssociation; /**< Dumps the hash association to a file. */
+    extern std::unordered_map<dt::hash_type, std::string> masterHashAssociation;
+    extern std::mutex hashAssociation_lock;
 
     constexpr int ARR_SIZ()
     {
@@ -152,6 +155,14 @@ namespace supp
         size_t remaining();
     };
 
+    /**
+     * @brief Dumps the association between hash and token to a file.
+     */
+    void dumpHashes(std::filesystem::path outputFile);
+
+    /**
+     * @brief A simple hash function.
+     */
     void hash_combine(size_t &seed, size_t const &v);
 
     /**

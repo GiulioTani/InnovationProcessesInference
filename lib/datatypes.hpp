@@ -48,4 +48,16 @@ namespace dt
      *
      */
     typedef struct TASK task;
+
+    struct FRAG_LABEL
+    {
+        task task_id;
+        book_id_t aut_frag;
+        frag_id_t frag;
+        bool operator==(struct FRAG_LABEL oth) { return task_id == oth.task_id && aut_frag == oth.aut_frag && frag == oth.frag; };
+    };
+
+    typedef struct FRAG_LABEL frag_label;
+
+    typedef std::vector<std::pair<hash_type, double>> contrib_type;
 }

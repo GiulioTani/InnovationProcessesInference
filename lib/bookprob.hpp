@@ -43,7 +43,9 @@
  */
 namespace bookprob
 {
-    
+    extern std::vector<std::pair<dt::frag_label, dt::contrib_type>> contributions_global;
+    extern std::mutex contrib_lock;
+
     /**
      * @brief A struct to contain the global multiplicities of words holding also their sum to avoid to recompute it if useless.
      *
@@ -328,7 +330,8 @@ namespace bookprob
          * @exception not_init in case any field of the book is not initialised.
          * @sa log_prob
          */
-        std::pair<double, dt::diff_tok_t> log_prob(const book &other) const;
+        std::pair<double, dt::diff_tok_t> log_prob(const book &other, dt::frag_label label) const;
+        std::pair<double, dt::diff_tok_t> plain_log_prob(const book &other) const;
 
         /**
          * @brief Get the prefix object.
@@ -345,7 +348,7 @@ namespace bookprob
          *
          * @return const std::vector<std::pair<std::string,int>>* Pointer to the dictionary.
          */
-        const std::vector<std::pair<hash_type, int>> *get_dictionary() const
+        const std::vector<std::pair<dt::hash_type, int>> *get_dictionary() const
         {
             if (order.size() == 0)
                 return NULL;
@@ -370,7 +373,7 @@ namespace bookprob
         book &operator=(book &&oth);
 
         size_t get_N() { return N; }
-        virtual void log_prob_to_chararr(const book &other, void *dest) const;
+        virtual void log_prob_to_chararr(std::pair<double, double> prob, void *dest) const;
         virtual void log_prob_to_chararr(void *dest) const;
         virtual size_t retsize() const;
 
@@ -406,6 +409,7 @@ namespace bookprob
          * @sa init_tmpP0
          */
         double logP_words() const;
+        double logP_words(std::vector<std::pair<dt::hash_type, double>>& contributions) const;
 
     private:
         /**
