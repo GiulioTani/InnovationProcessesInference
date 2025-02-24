@@ -25,6 +25,7 @@
  *
  */
 #include "lib/supportlib.hpp"
+#include "lib/bookdkl.hpp"
 #include <queue>
 #include <algorithm>
 #include <csignal>
@@ -67,9 +68,9 @@ namespace supp
                 _size += j.second.size();
     }
 
-    task task_iterator::pop()
+    dt::task task_iterator::pop()
     {
-        task ret;
+        dt::task ret;
         if (now_slice == cakelist.end())
         {
             if (returned.empty())
@@ -102,17 +103,17 @@ namespace supp
         return ret;
     }
 
-    void task_iterator::place_back(task job)
+    void task_iterator::place_back(dt::task job)
     {
         returned.emplace(std::make_pair(job.aut2, job.book));
         _size++;
     }
 
-    list_manager::list_manager(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
+    list_manager::list_manager(const bp::library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
     {
         create(shelf, cake, slices);
     }
-    void list_manager::create(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
+    void list_manager::create(const bp::library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices)
     {
         size_t n = 0;
         std::vector<std::pair<dt::auth_id_t, dt::book_id_t>> tempV, tempV2, jobs;
@@ -149,14 +150,14 @@ namespace supp
         }
     };
 
-    void list_manager::place_back(task job)
+    void list_manager::place_back(dt::task job)
     {
         std::lock_guard<std::mutex> guard(lock);
         taskers.at(job.aut1).place_back(job);
         placed_back.emplace(job.aut1);
     }
 
-    task list_manager::pop(dt::auth_id_t my_aut)
+    dt::task list_manager::pop(dt::auth_id_t my_aut)
     {
         dt::auth_id_t new_aut;
         std::lock_guard<std::mutex> guard(lock);
@@ -263,7 +264,7 @@ namespace supp
             inputfiles.open((fileP0).c_str(), std::ifstream::binary);
             if (inputfiles)
             {
-                std::pair<const bookprob::hash_type, int> hash_count;
+                std::pair<const dt::hash_type, int> hash_count;
                 while (!inputfiles.eof())
                 {
                     inputfiles.read(reinterpret_cast<char *>(&hash_count), sizeof(hash_count));
@@ -291,7 +292,7 @@ namespace supp
                     ss >> word >> molt;
                     if (seen.emplace(word).second)
                     {
-                        bp::hash_type temp = std::hash<std::string>{}(word);
+                        dt::hash_type temp = std::hash<std::string>{}(word);
                         if (!P0.prob.emplace(temp, molt).second)
                             throw bp::word_doubled(word, "hashing");
                         P0.count += molt;
@@ -332,7 +333,7 @@ namespace supp
             s += (int)v.second.size();
         return s;
     }
-    void cake_from_library(std::vector<supp::slice> *cake, const library &shelf, int slicesize)
+    void cake_from_library(std::vector<supp::slice> *cake, const bp::library &shelf, int slicesize)
     {
         int numbooks = 0, numslices = 0;
         std::vector<std::pair<dt::auth_id_t, dt::book_id_t>> well, authwell;
@@ -370,10 +371,10 @@ namespace supp
                 cake->at(i % numslices).shelf[well[i].first].emplace(well[i].second); // create slicing
     }
 
-    bp::book split_frag(std::vector<bp::hash_type> &splitBook, int A, int B, int F, int start, int end, bp::glob_prob &P0)
+    bp::book split_frag(std::vector<dt::hash_type> &splitBook, int A, int B, int F, int start, int end, bp::glob_prob &P0)
     {
         std::ostringstream fragname;
-        std::vector<bp::hash_type> fragment;
+        std::vector<dt::hash_type> fragment;
         fragment.clear();
         std::copy(splitBook.begin() + start, splitBook.begin() + end, std::back_inserter(fragment));
 
@@ -383,17 +384,17 @@ namespace supp
         return bp::book(fragment, &P0, -100, -100, fragname.str());
     }
 
-    int read_books_from_file(library &shelf_short, sequence &shelf_long, int F, std::queue<std::filesystem::path> &inputFiles, bp::glob_prob &P0)
+    int read_books_from_file(bp::library &shelf_short, dt::sequence &shelf_long, int F, std::queue<std::filesystem::path> &inputFiles, bp::glob_prob &P0)
     {
         long long int fn, tfs, res, add, totFrag = 0, B = 0;
         std::ifstream inwnt, inseq;
         std::string line, word, word2, filename;
         std::ostringstream fragname;
         std::istringstream ss;
-        std::vector<std::pair<bp::hash_type, int>> newfrag;
+        std::vector<std::pair<dt::hash_type, int>> newfrag;
         std::vector<std::string> tmp_splitBook;
-        std::vector<bp::hash_type> splitBook;
-        std::unordered_map<dt::book_id_t, std::vector<bp::hash_type>> tmp_long;
+        std::vector<dt::hash_type> splitBook;
+        std::unordered_map<dt::book_id_t, std::vector<dt::hash_type>> tmp_long;
         std::unordered_map<dt::book_id_t, std::vector<std::unique_ptr<bp::book>>> tmp_short;
         std::filesystem::path inputFile;
         std::hash<std::string> hasher;
@@ -441,7 +442,7 @@ namespace supp
                         fragname.clear();
                         fragname.str("");
                         fragname << "A" << A << "B" << B << "F1";
-                        tmp_short[B].push_back(std::make_unique<bp::book>(bp::book(std::vector<std::pair<bp::hash_type, int>>{std::make_pair(std::hash<std::string>{}(""), 0)}, &P0, -100, -100, fragname.str())));
+                        tmp_short[B].push_back(std::make_unique<bp::book>(bp::book(std::vector<std::pair<dt::hash_type, int>>{std::make_pair(std::hash<std::string>{}(""), 0)}, &P0, -100, -100, fragname.str())));
                         continue;
                     }
                     if (F == 1)
@@ -586,7 +587,7 @@ namespace supp
         }
     }
 
-    unsigned short int split_save_number(library &shelf_short, int numThreads)
+    unsigned short int split_save_number(bp::library &shelf_short, int numThreads)
     {
         unsigned short int numb_of_buck;
         int tot_book = 0;

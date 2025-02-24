@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "lib/authorSplitter.hpp"
+#include "lib/bookdkl.hpp"
 #include <random>
 #include <algorithm>
 #include <cmath>
@@ -80,7 +81,7 @@ namespace asp
         return authorDimension > 10000 ? 1000 : authorDimension / 10 /**Tolerance on slice size.*/;
     }
 
-    size_t get_fullLength(supp::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl)
+    size_t get_fullLength(dt::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl)
     {
         size_t fullLength = 0 /**Total equivalent size of the author.*/;
         for (auto &book : shelf_long.at(autNum))
@@ -113,11 +114,11 @@ namespace asp
             return parts;
         }
     }
-    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(supp::sequence &shelf_long, dt::auth_id_t autNum, dt::book_id_t bookExcl, long F)
+    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(dt::sequence &shelf_long, dt::auth_id_t autNum, dt::book_id_t bookExcl, long F)
     {
         return authorSplitter(shelf_long, autNum, std::set<dt::book_id_t>({bookExcl}), F);
     }
-    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(supp::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl, long F)
+    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(dt::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl, long F)
     {
         size_t fullLength = 0 /**Total equivalent size of the author.*/;
         double slicesize /**Actual size of the slice, may be different from authorDimension*/, virtualSize = 0 /**Current equivalent size of the slice part.*/;
@@ -125,7 +126,7 @@ namespace asp
         unsigned delta = get_delta();
         dt::book_id_t nextbook = 0 /**Index of the next book in order.*/;
         int nexttoken = 0 /**Position of the next character of the present book.*/;
-        std::vector<bookprob::hash_type> newAut;
+        std::vector<dt::hash_type> newAut;
         std::vector<std::unique_ptr<bp::book>> proposedAuthors;
         std::map<dt::book_id_t, std::unique_ptr<bp::book>> returnedAuthors;
 

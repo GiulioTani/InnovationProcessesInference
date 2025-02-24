@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "lib/bookdkl.hpp"
+#include "lib/supportlib.hpp"
 #include <math.h>
 #include <iostream>
 #define CROSSENTROPY

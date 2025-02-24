@@ -37,9 +37,9 @@ namespace asp
      * @param autNum     the author to split
      * @return std::map<int,bookprob::book>
      */
-    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(supp::sequence &shelf_long, dt::auth_id_t autNum, dt::book_id_t bookExcl = 0, long F = 0);
-    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(supp::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl, long F = 0);
+    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(dt::sequence &shelf_long, dt::auth_id_t autNum, dt::book_id_t bookExcl = 0, long F = 0);
+    std::map<dt::book_id_t, std::unique_ptr<bp::book>> authorSplitter(dt::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl, long F = 0);
     std::vector<std::string> split(std::string seq, int N);
-    size_t get_fullLength(supp::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl);
+    size_t get_fullLength(dt::sequence &shelf_long, dt::auth_id_t autNum, std::set<dt::book_id_t> bookExcl);
     dt::book_id_t parts_num(size_t num_books, size_t num_excl, size_t fullLength);
 }

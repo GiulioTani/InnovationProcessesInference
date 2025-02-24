@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "lib/bookprob.hpp"
+#include "lib/supportlib.hpp"
 #include <stdio.h>
 #include <iostream>
 #include <unordered_set>
@@ -27,7 +28,7 @@
 
 namespace bookprob
 {
-    std::unordered_map<hash_type, std::string> missing_words;
+    std::unordered_map<dt::hash_type, std::string> missing_words;
     std::mutex missing_words_lock;
     book::book(const book &oth)
     {
@@ -78,14 +79,14 @@ namespace bookprob
         fixWeight = -100;
     };
 
-    book::book(const std::vector<hash_type> &list, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
+    book::book(const std::vector<dt::hash_type> &list, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
     {
         initpar(Alpha, Theta);
         read_from_list(list);
         fixWeight = -100;
     };
 
-    book::book(const std::vector<std::pair<hash_type, int>> &ord, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
+    book::book(const std::vector<std::pair<dt::hash_type, int>> &ord, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
     {
         N = 0;
         initpar(Alpha, Theta);
@@ -102,7 +103,7 @@ namespace bookprob
     book book::join(const book &other) const
     {
         std::string newpref = prefix + other.prefix;
-        std::vector<std::pair<hash_type, int>> neworder;
+        std::vector<std::pair<dt::hash_type, int>> neworder;
         neworder = order;
         for (auto &p : other.order)
         {
@@ -240,7 +241,7 @@ namespace bookprob
     void book::init_tmpP0(const book &other) const
     {
         tmpP0 = std::vector<int>();
-        tmpP0.reserve(std::size_t(other.order.size()/2));
+        tmpP0.reserve(std::size_t(other.order.size() / 2));
 #if _P0_NORMALIZATION_ > 0
         if (fixWeight < 0)
         {
@@ -296,7 +297,7 @@ namespace bookprob
     double book::logP_words() const
     {
 #if _P0_NORMALIZATION_ < 0
-        return tmpP0.size()*log(1./nowWeight);
+        return tmpP0.size() * log(1. / nowWeight);
         throw std::runtime_error("Not quitted.");
 #endif
         double p = 0;
@@ -322,13 +323,12 @@ namespace bookprob
         memcpy((char*)dest + sizeof(tmp.first), &tmp.second, sizeof(tmp.second));
     };
 
-
-    void book::log_prob_to_chararr(void* dest) const
+    void book::log_prob_to_chararr(void *dest) const
     {
         constexpr std::array<unsigned char, 8> bb{0, 0, 0, 0, 0, 0, 240, 255};
-        constexpr dt::diff_tok_t dd=0;
+        constexpr dt::diff_tok_t dd = 0;
         memcpy(dest, &bb, sizeof(bb));
-        memcpy((char*)dest + sizeof(bb), &dd, sizeof(dd));
+        memcpy((char *)dest + sizeof(bb), &dd, sizeof(dd));
     }
 
     void book::initpar(double Alpha, double Theta)
@@ -447,14 +447,14 @@ namespace bookprob
 
     void book::read_from_list(std::vector<std::string> list)
     {
-        std::vector<hash_type> hash_list;
+        std::vector<dt::hash_type> hash_list;
         std::hash<std::string> hasher;
         hash_list.reserve(list.size());
         if (!list.size())
             throw empty_file("sequence");
         for (auto &word : list)
         {
-            hash_type temp = hasher(word);
+            dt::hash_type temp = hasher(word);
             if (!missing_words.empty())
             {
                 std::lock_guard<std::mutex> lk(missing_words_lock);
@@ -466,7 +466,7 @@ namespace bookprob
         read_from_list(hash_list);
     }
 
-    void book::read_from_list(std::vector<hash_type> list)
+    void book::read_from_list(std::vector<dt::hash_type> list)
     {
         if (!list.size())
             throw empty_file("sequence");

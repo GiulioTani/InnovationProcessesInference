@@ -747,7 +747,7 @@ namespace be
     void base_experiment::worker(supp::result_box &results, supp::list_manager &authList)
     { //
         std::pair<double, double> par;
-        supp::task job;
+        dt::task job;
         supp::comp_id this_comp;
         size_t res_len = shelf_short.begin()->second.begin()->second.front()->retsize();
         unsigned char *pos_now;

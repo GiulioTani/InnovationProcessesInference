@@ -16,6 +16,9 @@
 
 #pragma once
 #include <stdint-gcc.h>
+#include <vector>
+#include <unordered_map>
+#include <memory>
 namespace dt
 {
     typedef uint32_t diff_tok_t;
@@ -23,4 +26,26 @@ namespace dt
     typedef uint32_t book_id_t;
     typedef uint32_t frag_id_t;
     typedef uint32_t slice_id_t;
+    typedef size_t hash_type;
+
+    typedef std::unordered_map<auth_id_t, std::unordered_map<book_id_t, std::vector<hash_type>>> sequence;
+
+    /**
+     * @struct TASK supportlib.hpp
+     * @brief Contains information on the book to compute.
+     *
+     */
+    struct TASK
+    {
+        auth_id_t aut1 /** Author to compare with. */, aut2 /** Author of the book to compare. */;
+        book_id_t book /** Number of the book to compare */;
+        bool operator==(struct TASK oth) { return aut1 == oth.aut1 && aut2 == oth.aut2 && book == oth.book; };
+    };
+
+    /**
+     * @typedef typedef struct TASK task
+     * @brief Defines as a type the struct TASK.
+     *
+     */
+    typedef struct TASK task;
 }

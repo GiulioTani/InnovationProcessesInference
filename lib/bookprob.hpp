@@ -43,14 +43,14 @@
  */
 namespace bookprob
 {
-    typedef size_t hash_type;
+    
     /**
      * @brief A struct to contain the global multiplicities of words holding also their sum to avoid to recompute it if useless.
      *
      */
     struct glob_prob
     {
-        std::unordered_map<hash_type, int> prob; /**< The \c map containing the P0.*/
+        std::unordered_map<dt::hash_type, int> prob; /**< The \c map containing the P0.*/
         int count;                               /**< The sum of multiplicities of the words defining the P0.*/
     };
 
@@ -217,7 +217,7 @@ namespace bookprob
          * @param pref The prefix, i.e. an unique name, for the book.
          */
         book(const std::vector<std::string> &list, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "");
-        book(const std::vector<hash_type> &list, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "");
+        book(const std::vector<dt::hash_type> &list, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "");
 
         /**
          * @brief Construct a new book object
@@ -228,7 +228,7 @@ namespace bookprob
          * @param Theta The \c theta parameter for the PDP.
          * @param pref The prefix, i.e. an unique name, for the book.
          */
-        book(const std::vector<std::pair<hash_type, int>> &ord, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "");
+        book(const std::vector<std::pair<dt::hash_type, int>> &ord, const glob_prob *inP0 = NULL, double Alpha = -100, double Theta = -100, std::string pref = "");
 
         /**
          * @brief Joins two books in order without modifying them.
@@ -377,10 +377,10 @@ namespace bookprob
     protected:
         double alpha /** The \c alpha parameter of the PDP*/, theta /** The \c theta parameter of the PDP*/;
         size_t N /** The length of the book.*/;
-        std::vector<std::pair<hash_type, int>> order /** The order of the words in the book with their multiplicities.*/;
+        std::vector<std::pair<dt::hash_type, int>> order /** The order of the words in the book with their multiplicities.*/;
         const glob_prob *P0 /** Pointer to the \c struct containing the P0*/;
         std::string prefix /** The prefix associated to the book, is intended to be an unique identifier.*/;
-        std::unordered_map<hash_type, int> positions /** The \c map linking the words in the book to their order in the sequence*/;
+        std::unordered_map<dt::hash_type, int> positions /** The \c map linking the words in the book to their order in the sequence*/;
         mutable std::vector<int> tmpP0 /** The multiplicities of the words not yet appeared in the sequence. */;
         mutable int fixWeight /** The sum of the multiplicities of words missing from the book*/, nowWeight;
 
@@ -451,7 +451,7 @@ namespace bookprob
          * @param list The vector containing the book.
          */
         void read_from_list(std::vector<std::string> list);
-        void read_from_list(std::vector<hash_type> list);
+        void read_from_list(std::vector<dt::hash_type> list);
 
         /**
          * @brief Initialise the tmpP0 and fixedweight.
@@ -463,7 +463,14 @@ namespace bookprob
         void init_tmpP0() const;
     };
 
-    extern std::unordered_map<hash_type, std::string> missing_words;
+    /**
+     * @typedef std::unordered_map<int,std::unordered_map<int,std::vector<book>>> library
+     * @brief Defines the \c library type.
+     * The nested structure of authors having books having fragments is of widespread use in fragments probability computation.
+     */
+    typedef std::unordered_map<dt::auth_id_t, std::unordered_map<dt::book_id_t, std::vector<std::unique_ptr<book>>>> library;
+
+    extern std::unordered_map<dt::hash_type, std::string> missing_words;
     extern std::mutex missing_words_lock;
     /**
      * @typedef std::unordered_map<int,std::string> trueName

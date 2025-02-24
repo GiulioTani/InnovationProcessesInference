@@ -41,8 +41,8 @@ namespace be
         std::vector<std::thread> workers;
         char flagbyte = 0;
         std::string outputFile;
-        supp::library shelf_short;
-        supp::sequence shelf_long;
+        bp::library shelf_short;
+        dt::sequence shelf_long;
         bp::glob_prob P0;
         std::map<dt::auth_id_t, std::unordered_map<dt::slice_id_t, dt::book_id_t>> slice_author_size;
         std::map<dt::auth_id_t, dt::book_id_t> main_parts;

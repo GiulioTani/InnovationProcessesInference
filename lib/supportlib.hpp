@@ -26,7 +26,6 @@
  */
 #pragma once
 #include "lib/bookprob.hpp" //defines namespace book
-#include "lib/bookdkl.hpp"
 #include "lib/datatypes.hpp"
 #include <vector>
 #include <set>
@@ -55,36 +54,8 @@ namespace bp = bookprob;
  */
 namespace supp
 {
-    extern bool FLAG;  /**< Activates the controlled shutdown when the first SIGINT arrives. */
-    extern bool NOHUP; /**< Makes the signal handler ignore the first SIGHUP.*/
-
-    /**
-     * @typedef std::unordered_map<int,std::unordered_map<int,std::vector<book>>> library
-     * @brief Defines the \c library type.
-     * The nested structure of authors having books having fragments is of widespread use in fragments probability computation.
-     */
-    typedef std::unordered_map<dt::auth_id_t, std::unordered_map<dt::book_id_t, std::vector<std::unique_ptr<bp::book>>>> library;
-
-    typedef std::unordered_map<dt::auth_id_t, std::unordered_map<dt::book_id_t, std::vector<bp::hash_type>>> sequence;
-
-    /**
-     * @struct TASK supportlib.hpp
-     * @brief Contains information on the book to compute.
-     *
-     */
-    struct TASK
-    {
-        dt::auth_id_t aut1 /** Author to compare with. */, aut2 /** Author of the book to compare. */;
-        dt::book_id_t book /** Number of the book to compare */;
-        bool operator==(struct TASK oth) { return aut1 == oth.aut1 && aut2 == oth.aut2 && book == oth.book; };
-    };
-
-    /**
-     * @typedef typedef struct TASK task
-     * @brief Defines as a type the struct TASK.
-     *
-     */
-    typedef struct TASK task;
+    extern bool FLAG;                /**< Activates the controlled shutdown when the first SIGINT arrives. */
+    extern bool NOHUP;               /**< Makes the signal handler ignore the first SIGHUP.*/
 
     constexpr int ARR_SIZ()
     {
@@ -126,8 +97,8 @@ namespace supp
     public:
         task_iterator() = default;
         task_iterator(dt::auth_id_t aid, std::vector<std::reference_wrapper<const supp::slice>> cake_part, size_t size = 0);
-        task pop();
-        void place_back(task job);
+        dt::task pop();
+        void place_back(dt::task job);
         size_t size() const { return _size; };
     };
 
@@ -164,8 +135,8 @@ namespace supp
          *
          * @param shelf The \c library object used to initialize.
          */
-        list_manager(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
-        void create(const library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
+        list_manager(const bp::library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
+        void create(const bp::library &shelf, const std::vector<supp::slice> &cake, const std::vector<int> &slices);
         /**
          * @brief Assigns a task to a worker.
          *
@@ -176,8 +147,8 @@ namespace supp
          * @param my_aut The code of the author the worker is computing at the moment.
          * @return task The \c task containing the author to compare with and the book to compare.
          */
-        task pop(dt::auth_id_t my_aut);
-        void place_back(task job);
+        dt::task pop(dt::auth_id_t my_aut);
+        void place_back(dt::task job);
         size_t remaining();
     };
 
@@ -202,7 +173,7 @@ namespace supp
     {
         std::string msg = "Interrupted by the user. "; /**< Base message explaining the exception. */
     public:
-        user_stop(){};
+        user_stop() {};
 
         /**
          * @brief Construct a new user stop object
@@ -229,13 +200,13 @@ namespace supp
     void load_P0(std::string fileP0, bp::glob_prob &P0);
     void dump_P0(std::filesystem::path outputFolderPath, bp::glob_prob &P0);
 
-    void cake_from_library(std::vector<supp::slice> *cake, const library &shelf, int slicesize);
+    void cake_from_library(std::vector<supp::slice> *cake, const bp::library &shelf, int slicesize);
 
-    int read_books_from_file(library &shelf_short, sequence &shelf_long, int A, std::queue<std::filesystem::path> &inputFile, bp::glob_prob &P0);
+    int read_books_from_file(bp::library &shelf_short, dt::sequence &shelf_long, int A, std::queue<std::filesystem::path> &inputFile, bp::glob_prob &P0);
 
     std::string insert_padded_number(std::string first_part, std::string last_part, int n, int padsize = 3);
 
-    unsigned short int split_save_number(library &shelf_short, int numThreads);
+    unsigned short int split_save_number(bp::library &shelf_short, int numThreads);
     template <typename T, typename U>
     class my_hash
     {
@@ -256,8 +227,8 @@ namespace supp
         dt::auth_id_t comp_aut, auth;
         dt::book_id_t book, comp_frag_num;
         comp_id() = default;
-        comp_id(int c, int a, int b, int cf = -1) : comp_aut(c), auth(a), book(b), comp_frag_num(cf){};
-        comp_id(const comp_id &oth) : comp_aut(oth.comp_aut), auth(oth.auth), book(oth.book), comp_frag_num(oth.comp_frag_num){};
+        comp_id(int c, int a, int b, int cf = -1) : comp_aut(c), auth(a), book(b), comp_frag_num(cf) {};
+        comp_id(const comp_id &oth) : comp_aut(oth.comp_aut), auth(oth.auth), book(oth.book), comp_frag_num(oth.comp_frag_num) {};
         comp_id(std::array<unsigned short int, ARR_SIZ()> tmp)
         {
             memcpy(&comp_aut, tmp.data(), sizeof(dt::auth_id_t));
