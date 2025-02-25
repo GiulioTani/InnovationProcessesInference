@@ -32,7 +32,7 @@ namespace bookprob
     std::mutex missing_words_lock;
     std::vector<std::pair<dt::frag_label, dt::contrib_type>> contributions_global;
     std::mutex contrib_lock;
-    
+
     book::book(const book &oth)
     {
         alpha = oth.alpha;
@@ -222,14 +222,18 @@ namespace bookprob
         {
             if (positions.find(p.first) != positions.end())
             {
-                contributions.push_back({p.first, lgamma(p.second + order[positions.at(p.first)].second - alpha) - lgamma(order[positions.at(p.first)].second - alpha)});
-                P += contributions.back().second;
+                contributions.push_back({p.first, {lgamma(p.second + order[positions.at(p.first)].second - alpha) - lgamma(order[positions.at(p.first)].second - alpha), p.second}});
+                P += contributions.back().second.first;
             } // if the word was already in my vocabulary
             else
             {
                 if (p.second > 1)
-                    {contributions.push_back({p.first, -(lgamma(p.second - alpha) - lgamma(1 - alpha))});
-                        P += -contributions.back().second; }// if the word is new
+                {
+                    contributions.push_back({p.first, {10000 + (lgamma(p.second - alpha) - lgamma(1 - alpha)), p.second}});
+                    P += contributions.back().second.first - 10000;
+                } // if the word is new
+                else
+                    contributions.push_back({p.first, {10000,1}});
                 try
                 {
                     tmpP0.push_back(P0->prob.at(p.first)); // getting counts of all the words in my dictionary
@@ -245,20 +249,22 @@ namespace bookprob
         P += log(alpha) * (int)tmpP0.size() + lgamma(theta / alpha + (int)order.size() + (int)tmpP0.size()) - lgamma(theta / alpha + (int)order.size());
         P -= lgamma(theta + N + other.N) - lgamma(theta + N);
         P += logP_words(contributions);
-        contributions.push_back({1, N});
-        contributions.push_back({1, other.N});
-        contributions.push_back({1, tmpP0.size()});
-        contributions.push_back({1, order.size()});
+        contributions.push_back({1, {alpha,0}});
+        contributions.push_back({1, {theta,0}});
+        contributions.push_back({1, {N,0}});
+        contributions.push_back({1, {other.N,0}});
+        contributions.push_back({1, {tmpP0.size(),0}});
+        contributions.push_back({1, {order.size(),0}});
         try
         {
             std::lock_guard<std::mutex> ls(contrib_lock);
             contributions_global.push_back({label, contributions});
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             std::cerr << e.what() << '\n';
         }
-        
+
         return {P / log(10), dt::diff_tok_t(tmpP0.size())}; // to have the logarithm in base 10
     };
 
@@ -379,7 +385,7 @@ namespace bookprob
         return p;
     };
 
-    double book::logP_words(std::vector<std::pair<dt::hash_type, double>>& contributions) const
+    double book::logP_words(dt::contrib_type &contributions) const
     {
 #if _P0_NORMALIZATION_ < 0
         return tmpP0.size() * log(1. / nowWeight);
@@ -388,8 +394,8 @@ namespace bookprob
         double p = 0;
         for (auto molt : tmpP0)
         {
-            contributions.push_back({0, -log((double)molt / nowWeight)});
-            p += -contributions.back().second;
+            contributions.push_back({0, {log((double)molt / nowWeight),0}});
+            p += contributions.back().second.first;
 #if _P0_NORMALIZATION_ > 1
             nowWeight -= molt;
 #endif

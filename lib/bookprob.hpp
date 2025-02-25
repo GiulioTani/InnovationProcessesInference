@@ -52,7 +52,7 @@ namespace bookprob
      */
     struct glob_prob
     {
-        std::unordered_map<dt::hash_type, int> prob; /**< The \c map containing the P0.*/
+        std::unordered_map<dt::hash_type, uint64_t> prob; /**< The \c map containing the P0.*/
         int count;                               /**< The sum of multiplicities of the words defining the P0.*/
     };
 
@@ -409,7 +409,7 @@ namespace bookprob
          * @sa init_tmpP0
          */
         double logP_words() const;
-        double logP_words(std::vector<std::pair<dt::hash_type, double>>& contributions) const;
+        double logP_words(dt::contrib_type& contributions) const;
 
     private:
         /**

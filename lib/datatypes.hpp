@@ -59,5 +59,5 @@ namespace dt
 
     typedef struct FRAG_LABEL frag_label;
 
-    typedef std::vector<std::pair<hash_type, double>> contrib_type;
+    typedef std::vector<std::pair<hash_type, std::pair<double, uint64_t>>> contrib_type;
 }

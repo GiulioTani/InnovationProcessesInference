@@ -48,8 +48,8 @@
 namespace bp = bookprob;
 namespace supp
 {
-    bool FLAG = true;  /**< Activates the controlled shutdown when the first SIGINT arrives. */
-    bool NOHUP = true; /**< Makes the signal handler ignore the first SIGHUP.*/
+    bool FLAG = true;         /**< Activates the controlled shutdown when the first SIGINT arrives. */
+    bool NOHUP = true;        /**< Makes the signal handler ignore the first SIGHUP.*/
     bool dumpHashAssociation; /**< Dumps the hash association to a file. */
     std::unordered_map<dt::hash_type, std::string> masterHashAssociation;
     std::mutex hashAssociation_lock;
@@ -348,7 +348,7 @@ namespace supp
         randaut.reserve(shelf.size());
         for (auto &a : shelf)
             if (a.first > 0)
-            randaut.push_back(a.first);
+                randaut.push_back(a.first);
         std::shuffle(std::begin(randaut), std::end(randaut), rng);
         for (auto &a : randaut)
         {
@@ -553,8 +553,9 @@ namespace supp
         return totFrag;
     }
 
-    void dumpHashes(std::filesystem::path outputFile){
-        std::ofstream output(outputFile.string()+"_hashes.txt");
+    void dumpHashes(std::filesystem::path outputFile)
+    {
+        std::ofstream output(outputFile.string() + "_hashes.txt");
         if (output)
         {
             for (auto p : masterHashAssociation)
@@ -563,22 +564,38 @@ namespace supp
         }
         else
             throw std::runtime_error("Could not open hash association output file");
-        
-        output.open(outputFile.string()+"_contributions.txt");
+
+        output.open(outputFile.string() + "_contributions.bin", std::ofstream::binary);
         if (output)
         {
             for (auto p : bp::contributions_global)
             {
-                output << "####FRAGMENT####\nAuth1: "<<p.first.task_id.aut1<<"\nAuth2: "<<p.first.task_id.aut2<<"\nBook: "<<p.first.task_id.book<<"\nAuthFrag: "<<p.first.aut_frag<<"\nFrag: "<<p.first.frag<<std::endl;
-                output << "AuthN: "<<(p.second.end()-4)->second<<"\nFragN: "<<(p.second.end()-3)->second<<"\nNewTokens: "<<(p.second.end()-2)->second<<"\nKnownTokens: "<<(p.second.end()-1)->second<<std::endl;
-                for (unsigned i=0; i<p.second.size()-4; i++)
-                    output << p.second[i].first<< "\t"<< p.second[i].second << std::endl;
+                output.write(reinterpret_cast<const char *>(&p.first.task_id.aut1), sizeof(p.first.task_id.aut1));
+                output.write(reinterpret_cast<const char *>(&p.first.task_id.aut2), sizeof(p.first.task_id.aut2));
+                output.write(reinterpret_cast<const char *>(&p.first.task_id.book), sizeof(p.first.task_id.book));
+                output.write(reinterpret_cast<const char *>(&p.first.aut_frag), sizeof(p.first.aut_frag));
+                output.write(reinterpret_cast<const char *>(&p.first.frag), sizeof(p.first.frag));
+                double par = (p.second.end() - 6)->second.first;
+                output.write(reinterpret_cast<const char *>(&par), sizeof(par));
+                par = (p.second.end() - 5)->second.first;
+                output.write(reinterpret_cast<const char *>(&par), sizeof(par));
+                unsigned temp = (p.second.end() - 4)->second.first;
+                output.write(reinterpret_cast<const char *>(&temp), sizeof(temp));
+                temp = (p.second.end() - 3)->second.first;
+                output.write(reinterpret_cast<const char *>(&temp), sizeof(temp));
+                temp = (p.second.end() - 2)->second.first;
+                output.write(reinterpret_cast<const char *>(&temp), sizeof(temp));
+                temp = (p.second.end() - 1)->second.first;
+                output.write(reinterpret_cast<const char *>(&temp), sizeof(temp));
+                temp = p.second.size() - 6;
+                output.write(reinterpret_cast<const char *>(&temp), sizeof(temp));
+                for (unsigned i = 0; i < p.second.size() - 6; i++)
+                    output.write(reinterpret_cast<const char *>(&(p.second[i])), sizeof(p.second[i]));
             }
             output.close();
         }
         else
             throw std::runtime_error("Could not open hash association output file");
-
     }
 
     std::string nicetime(int t)

@@ -92,8 +92,8 @@ namespace bookprob
             if (positions.find(p.first) != positions.end())
 #ifdef CROSSENTROPY
             {
-                contributions.push_back({p.first, p.second * log(frequency[positions.at(p.first)].second - corr)});
-                P += contributions.back().second;
+                contributions.push_back({p.first, {p.second * log(frequency[positions.at(p.first)].second - corr),p.second}});
+                P += contributions.back().second.first;
             } // if the word was already in my vocabulary
 #else
             {
@@ -106,11 +106,11 @@ namespace bookprob
                 try
                 {
 #ifdef CROSSENTROPY
-                    contributions.push_back({p.first, -p.second * log(factP0 * P0->prob.at(p.first) / nowWeight)});
+                    contributions.push_back({p.first, {p.second * log(factP0 * P0->prob.at(p.first) / nowWeight), p.second}});
 #else
-                    contributions.push_back({p.first, -p.second * (log(p.second) - log(factP0 * P0->prob.at(p.first) / nowWeight))});
+                    contributions.push_back({p.first, {p.second * (log(p.second) - log(factP0 * P0->prob.at(p.first) / nowWeight)), p.second}});
 #endif // CROSSENTROPY
-                    P += -contributions.back().second;
+                    P += contributions.back().second.first;
                     rest += p.second;
                 }
                 catch (std::out_of_range &e)
@@ -123,10 +123,12 @@ namespace bookprob
         }
 #ifdef CROSSENTROPY
         P += log(N / (theta + N));
-        contributions.push_back({1, N});
-        contributions.push_back({1, 0});
-        contributions.push_back({1, 0});
-        contributions.push_back({1, 0});
+        contributions.push_back({1, {alpha,0}});
+        contributions.push_back({1, {theta,0}});
+        contributions.push_back({1, {N,0}});
+        contributions.push_back({1, {0,0}});
+        contributions.push_back({1, {0,0}});
+        contributions.push_back({1, {0,0}});
         try
         {
             std::lock_guard<std::mutex> ls(contrib_lock);

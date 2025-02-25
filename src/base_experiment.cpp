@@ -50,7 +50,7 @@ namespace be
         bool new_slices, dumpP0 = false, dumpDetail = false;
         resuming = false;
 
-        while ((c = getopt(argc, argv, "f:F:o:p:t:s:d:n:S:P")) != -1 || argc == 0)
+        while ((c = getopt(argc, argv, "f:F:o:p:t:s:d:n:S:PD")) != -1 || argc == 0)
         {
             switch (c)
             {
@@ -922,14 +922,15 @@ namespace be
             // Compare all the fragments of the author
             my_results = std::vector<unsigned char>(shelf_short.at(job.aut2).at(job.book).size() * this_comp.comp_frag_num * res_len);
             pos_now = my_results.data();
-            dt::frag_id_t count_frag=0;
-            dt::frag_label frag_label={{0,0,0},0,0};
+            dt::frag_id_t count_frag = 0;
+            dt::frag_label frag_label = {{0, 0, 0}, 0, 0};
             for (auto &fragm1 : newAuthors)
             {
-                count_frag=0;
+                count_frag = 0;
                 for (auto &fragm2 : shelf_short.at(job.aut2).at(job.book))
                 {
-                    if (supp::dumpHashAssociation)frag_label={job, fragm1.first, count_frag++};
+                    if (supp::dumpHashAssociation)
+                        frag_label = {job, fragm1.first, count_frag++};
                     try
                     {
                         fragm1.second->log_prob_to_chararr(fragm1.second->log_prob(*fragm2, frag_label), pos_now);
