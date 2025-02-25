@@ -344,8 +344,10 @@ namespace supp
         std::vector<dt::auth_id_t> randaut;
         std::random_device rd;
         auto rng = std::default_random_engine{rd()};
+        bool theres_unknown = (shelf.find(0) != shelf.end());
         randaut.reserve(shelf.size());
         for (auto &a : shelf)
+            if (a.first > 0)
             randaut.push_back(a.first);
         std::shuffle(std::begin(randaut), std::end(randaut), rng);
         for (auto &a : randaut)
@@ -365,14 +367,21 @@ namespace supp
             throw std::invalid_argument("The number of slices is larger than the mazimum number allowed"
                                         "\nRecompile with a larger type for slice_id_t or change slice size. " +
                                         std::to_string(numslices));
+        if (theres_unknown)
+            numslices++;
         std::cout << "Cake: " << numslices << " slices of size " << slicesize << " for " << numbooks << " books." << std::endl;
 
         for (auto i = 0; i < numslices; i++)
             cake->push_back(supp::slice());
-
+        if (theres_unknown)
+        {
+            cake->at(0).shelf.emplace(0, std::set<dt::book_id_t>({}));
+            for (auto &b : shelf.at(0))
+                cake->at(0).shelf[0].emplace(b.first);
+        }
         for (auto i = 0; i < (int)well.size(); i++)
-            if (!(cake->at(i % numslices).shelf.emplace(well[i].first, std::set<dt::book_id_t>({well[i].second})).second))
-                cake->at(i % numslices).shelf[well[i].first].emplace(well[i].second); // create slicing
+            if (!(cake->at((i % (numslices - theres_unknown)) + theres_unknown).shelf.emplace(well[i].first, std::set<dt::book_id_t>({well[i].second})).second))
+                cake->at((i % (numslices - theres_unknown)) + theres_unknown).shelf[well[i].first].emplace(well[i].second); // create slicing
     }
 
     bp::book split_frag(std::vector<dt::hash_type> &splitBook, int A, int B, int F, int start, int end, bp::glob_prob &P0)
