@@ -564,6 +564,8 @@ def StatsFromType(authorBooksTotal, authorCorrect, authorAssigned):
     precision[mask] = 0
     recall[mask] = 0
     F1[mask] = 0
+    authorBooksTotal = authorBooksTotal if len(authorBooksTotal) > 0 else None
+    mask2 = mask2 if len(mask2) > 0 else None
 
     return {
         "weigh": {
