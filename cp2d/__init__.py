@@ -208,6 +208,12 @@ def main():
         help="Dump binary file with token hashes and multiplicities.",
     )
     run_parser.add_argument(
+        "-C",
+        action="store_true",
+        dest="dumpContributions",
+        help="Dump a text file with token hashes and probabilities and one with association of tokens and hashes. Implies '-d', requires '-W' and a single slice number.",
+    )
+    run_parser.add_argument(
         "-v",
         action="store_true",
         dest="sliceSeparated",
@@ -224,7 +230,7 @@ def main():
     run_parser.add_argument(
         "-W",
         type=int,
-        help="List of slices to be attributed (meaningful if a slicing is already present).",
+        help="List of slices to be attributed (meaningful if a slicing is already present or 0 for the unknown author only).",
         metavar="slices",
         dest="goodSlices",
         nargs="+",

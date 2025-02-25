@@ -310,6 +310,7 @@ def calprob(
     goodSlices=[],
     P0file: str = "",
     dumpP0: bool = False,
+    dumpContributions: bool = False,
 ):
     """
     Organizes the computation of the probabilities.
@@ -360,6 +361,7 @@ def calprob(
                     goodSlices,
                     P0file,
                     dumpP0,
+                    dumpContributions,
                 ),
             )
         )
@@ -439,6 +441,7 @@ def prob_compute(
     goodSlices,
     P0file: str = "",
     dumpP0: bool = False,
+    dumpContributions: bool = False,
 ):
     """
     Launches the computation of conditional probabilities
@@ -476,6 +479,16 @@ def prob_compute(
     if len(goodSlices):
         for s in goodSlices:
             args.extend(["-S", str(s)])
+    if dumpContributions:
+        if len(goodSlices) == 1:
+            args.extend(["-D"])
+        else:
+            logger.warning(
+                f"dumpContributions flag set with number of slices different from 1, ignoring."
+            )
+            warnings.warn(
+                "dumpContributions flag set with number of slices different from 1, ignoring."
+            )
     logger.info(f"Launching C++ code")
     print(" ".join(args))
     sys.stdout.flush()
@@ -488,7 +501,7 @@ def prob_compute(
         print(f"\n\nError in probabilities computation.\n", err.decode(), flush=True)
         raise RuntimeError("Failed computation.")
     else:
-        logger.warn(err.decode())
+        logger.warning(err.decode())
 
 
 if __name__ == "__main__":

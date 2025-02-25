@@ -89,6 +89,7 @@ class cp2dExperiment:
         goodSlices=[],
         P0file: str = "",
         dumpP0: bool = False,
+        dumpContributions: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -642,6 +643,7 @@ class cp2dExperiment:
                 goodSlices=self.__param["goodSlices"],
                 P0file=self.__param["P0file"],
                 dumpP0=self.__param["dumpP0"],
+                dumpContributions=self.__param["dumpContributions"],
             )
         except RuntimeError:
             sys.exit(1)
