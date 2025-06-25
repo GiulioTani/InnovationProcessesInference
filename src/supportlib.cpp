@@ -229,7 +229,7 @@ namespace supp
     {
         if (signo == SIGUSR1)
         {
-            sleep(1e9); // The thread is paused putting it to slee for 31 years and 9 months
+            sleep(1e9); // The thread is paused putting it to sleep for 31 years and 9 months
         }
         if (signo == SIGINT)
         {

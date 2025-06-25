@@ -144,7 +144,7 @@ namespace popt
           }
           else
           {
-            *alpha = 0.1;
+            *alpha = 0.01;
             theta_new /= 2;
           }
           incr_alpha /= 2;

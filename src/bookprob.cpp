@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <math.h>
 #include <unistd.h>
+#include <array>
 
 #define _P0_NORMALIZATION_ 1 /* -1 = uniform, 0 = fixed, 1 = normalize on author, 2 = normalize on author and fragment*/
 

@@ -17,6 +17,7 @@
 #include "lib/bookdkl.hpp"
 #include <math.h>
 #include <iostream>
+#include <array>
 #define CROSSENTROPY
 namespace bookprob
 {
