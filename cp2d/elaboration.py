@@ -540,6 +540,12 @@ class cp2dExperiment:
                 os.path.join(self.__param["database"], "slices.bin"),
                 os.path.join(outputDir, "slices.bin"),
             )
+            if os.path.isfile(os.path.join(self.__param["database"], "params.bin")):
+                print("Found parameters!")
+                shutil.copy(
+                    os.path.join(self.__param["database"], "params.bin"),
+                    os.path.join(outputDir, "params.bin"),
+                )
 
         self._parallel_extraction(self.__param["database"])
 
