@@ -3,7 +3,7 @@ CC = g++
 SH = bash
 RM = rm -f
 # define any compile-time flags
-CFLAGS = -Wall -Ofast -Wextra -std=c++1z # -D_GLIBCXX_DEBUG -D_FORTIFY_SOURCE=2 -pg --coverage -fprofile-abs-path#-fno-ipa-cp-clone -g -Og  #quando faccio il linking di fragprob -lgcov -pg
+CFLAGS = -Wall -Og -g -std=c++1z # -D_GLIBCXX_DEBUG -D_FORTIFY_SOURCE=2 -pg --coverage -fprofile-abs-path#-fno-ipa-cp-clone -g -Og  #quando faccio il linking di fragprob -lgcov -pg
 
 # define any directories containing header files other than /usr/include
 WD=`pwd`
