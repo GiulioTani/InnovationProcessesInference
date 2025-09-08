@@ -3,27 +3,29 @@ CC = g++
 SH = bash
 RM = rm -f
 # define any compile-time flags
-CFLAGS = -Wall -Ofast -Wextra -std=c++1z # -D_GLIBCXX_DEBUG -D_FORTIFY_SOURCE=2 -pg --coverage -fprofile-abs-path#-fno-ipa-cp-clone -g -Og  #quando faccio il linking di fragprob -lgcov -pg
+CFLAGS = -Wall -Ofast -Wextra -std=c++1z -mavx2 -mfma -DAE_CPU=AE_INTEL# -D_GLIBCXX_DEBUG -D_FORTIFY_SOURCE=2 -pg --coverage -fprofile-abs-path#-fno-ipa-cp-clone -g -Og  #quando faccio il linking di fragprob -lgcov -pg
 
 # define any directories containing header files other than /usr/include
 WD=`pwd`
-INCLUDES = -I${WD}
+INCLUDES = -I${WD} -I${WD}/alglib
 
 #when perfecting the folder structure change this to ../include
 HEADERS = lib
+ALGLIB = alglib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
 LIBS = -lm -lpthread
-VPATH=bin:src
+VPATH=bin:src:$(ALGLIB)
 ODIR=bin
 
 _DEPS = bookprob.hpp bookdkl.hpp supportlib.hpp paramOpt.hpp authorSplitter.hpp datatypes.hpp base_experiment.hpp
-DEPS = $(patsubst %,$(HEADERS)/%,$(_DEPS))
+DEPS = $(patsubst %,$(HEADERS)/%,$(_DEPS)) $(ls alglib/*h)
 
 _OBJ = bookprob.o bookdkl.o fragprob.o supportlib.o paramOpt.o authorSplitter.o base_experiment.o
-OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+_ALGLIB =$(wildcard $(ALGLIB)/*.cpp)
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ)) $(patsubst $(ALGLIB)/%.cpp,$(ODIR)/%.o,$(_ALGLIB))
 
 CINP = $(wildcard *.c)
 COUT = $(patsubst %.c,$(ODIR)/%,$(CINP))
