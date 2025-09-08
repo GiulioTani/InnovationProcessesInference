@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -86,11 +86,12 @@ namespace bookprob
         fixWeight = -100;
     };
 
-    book::book(const std::vector<std::pair<hash_type, int>> &ord, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
+    book::book(const std::vector<std::pair<hash_type, int>> &ord, const std::vector<int> &times, const glob_prob *inP0, double Alpha, double Theta, std::string pref) : P0(inP0), prefix(pref)
     {
         N = 0;
         initpar(Alpha, Theta);
         order = ord;
+        entry_t = times;
         for (auto i = 0; i < (int)order.size(); i++)
         {
             if (!positions.emplace(order[i].first, i).second)
@@ -104,27 +105,37 @@ namespace bookprob
     {
         std::string newpref = prefix + other.prefix;
         std::vector<std::pair<hash_type, int>> neworder;
+        std::vector<int> newentry;
         neworder = order;
-        for (auto &p : other.order)
+        newentry = entry_t;
+        for (auto i = 0; i < (int)other.order.size(); i++)
         {
+            auto &p = other.order[i];
             if (positions.find(p.first) != positions.end())
                 neworder[positions.at(p.first)].second += p.second;
             else
+            {
                 neworder.push_back(p);
+                newentry.push_back(other.entry_t[i] + N);
+            }
         }
-        return book(neworder, P0, alpha, theta, newpref);
+        return book(neworder, newentry, P0, alpha, theta, newpref);
     };
 
     void book::append(const book &other)
     {
-        for (auto &p : other.order)
+        for (auto i = 0; i < (int)other.order.size(); i++)
         {
+            auto &p = other.order[i];
             if (!positions.emplace(p.first, (int)order.size()).second)
                 order[positions.at(p.first)].second += p.second;
             else
+            {
                 order.push_back(p);
-            N += p.second;
+                entry_t.push_back(other.entry_t[i] + N);
+            }
         }
+        N += other.N;
         fixWeight = -100;
     };
 
@@ -241,7 +252,7 @@ namespace bookprob
     void book::init_tmpP0(const book &other) const
     {
         tmpP0 = std::vector<int>();
-        tmpP0.reserve(std::size_t(other.order.size()/2));
+        tmpP0.reserve(std::size_t(other.order.size() / 2));
 #if _P0_NORMALIZATION_ > 0
         if (fixWeight < 0)
         {
@@ -297,7 +308,7 @@ namespace bookprob
     double book::logP_words() const
     {
 #if _P0_NORMALIZATION_ < 0
-        return tmpP0.size()*log(1./nowWeight);
+        return tmpP0.size() * log(1. / nowWeight);
         throw std::runtime_error("Not quitted.");
 #endif
         double p = 0;
@@ -320,16 +331,15 @@ namespace bookprob
     {
         auto tmp = log_prob(other);
         memcpy(dest, &tmp.first, sizeof(tmp.first));
-        memcpy((char*)dest + sizeof(tmp.first), &tmp.second, sizeof(tmp.second));
+        memcpy((char *)dest + sizeof(tmp.first), &tmp.second, sizeof(tmp.second));
     };
 
-
-    void book::log_prob_to_chararr(void* dest) const
+    void book::log_prob_to_chararr(void *dest) const
     {
         constexpr std::array<unsigned char, 8> bb{0, 0, 0, 0, 0, 0, 240, 255};
-        constexpr dt::diff_tok_t dd=0;
+        constexpr dt::diff_tok_t dd = 0;
         memcpy(dest, &bb, sizeof(bb));
-        memcpy((char*)dest + sizeof(bb), &dd, sizeof(dd));
+        memcpy((char *)dest + sizeof(bb), &dd, sizeof(dd));
     }
 
     void book::initpar(double Alpha, double Theta)
@@ -471,10 +481,14 @@ namespace bookprob
     {
         if (!list.size())
             throw empty_file("sequence");
-        for (auto &word : list)
+        for (size_t i = 0; i < list.size(); i++)
         {
+            auto word = list[i];
             if (positions.emplace(std::make_pair(word, order.size())).second)
+            {
                 order.push_back(std::make_pair(word, 1));
+                entry_t.push_back(i);
+            }
             else
                 order[positions[word]].second++;
         }
