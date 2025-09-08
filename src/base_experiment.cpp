@@ -1,16 +1,16 @@
 // CP2D -- Constrained Probability Poisson-Dirichlet
 // Copyright (C) 2023  Giulio Tani Raffaelli
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -169,7 +169,7 @@ namespace be
         dump_and_process_aut_info();
 
         authList.create(shelf_short, cake, slices);
-        std::cout<<"Total fragments: "<< totFrag << std::endl;
+        std::cout << "Total fragments: " << totFrag << std::endl;
     }
 
     void base_experiment::read_books(const fs::path &inputFolder)
@@ -353,7 +353,7 @@ namespace be
                 inputfiles.read((char *)&par_id.second, sizeof(par_id.second));
                 inputfiles.read((char *)&par_val, sizeof(par_val));
 #ifdef _FULL_AUTHOR_PARAMETERS_
-                if (par_id.second==-1)
+                if (par_id.second == -1)
 #endif
                     if (!(params.emplace(par_id, par_val).second) && !inputfiles.eof())
                         throw bp::word_doubled("Same parameters twice: " + std::to_string(par_id.first) + " " + std::to_string(par_id.second));
@@ -845,7 +845,7 @@ namespace be
                         bp::book tmpSelf;
                         for (auto &au : newAuthors)
                             tmpSelf.append(*au.second);
-                        par = popt::param_opt(tmpSelf);
+                        par = popt::param_opt_ML(tmpSelf);
                         par_lock.lock();
                         params.emplace(std::make_pair(std::make_pair(my_aut, par_slice), par));
                     }
@@ -873,7 +873,7 @@ namespace be
                             }
                             computing_par.emplace(std::make_pair(au.first, par_slice));
                             par_lock.unlock();
-                            par = popt::param_opt(au.second);
+                            par = popt::param_opt_ML(au.second);
                             par_lock.lock();
                             params.emplace(std::make_pair(std::make_pair(au.first, par_slice), par));
                         }
@@ -1100,7 +1100,7 @@ namespace be
                                             bp::book tmpSelf;
                                             for (auto &au : shelf_short.at(aut)) for (auto &bk : au.second)
                                                 tmpSelf.append(*bk);
-                                            return std::make_pair(aut, popt::param_opt(tmpSelf)); }));
+                                            return std::make_pair(aut, popt::param_opt_ML(tmpSelf)); }));
         }
         for (auto &&task : tasks)
         {
