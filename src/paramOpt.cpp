@@ -47,6 +47,7 @@
 #define _incr_alpha 1e-4
 #define _incr_theta 1
 #define TOLLERANZA 50
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 namespace popt
 {
@@ -84,48 +85,26 @@ namespace popt
     size_t maxits = 0;
     alglib::lsfitstate state;
     alglib::lsfitreport rep;
-    alglib::real_1d_array bndl = "[0, 1]";
-    alglib::real_1d_array bndu = "[0.99999999, +inf]";
-
-    alglib::lsfitcreatefg(x, y, c, state);
-    alglib::lsfitsetcond(state, epsx, maxits);
-    alglib::lsfitsetbc(state, bndl, bndu);
-    alglib::lsfitfit(state, function_cx_1_func, function_cx_1_grad);
-    alglib::lsfitresults(state, c, rep);
-    return {c[0], c[1]};
-  }
-
-  std::pair<double, double> old_param_opt_fit(std::vector<double> &Dt,
-                                              double alpha0, double theta0)
-  {
-    std::vector<double> t(Dt.size(), 0);
-    for (size_t i = 0; i < t.size(); i++)
-      t[i] = i + 1;
-    /** */
-    alglib::real_1d_array y;
-    alglib::real_2d_array x;
-    y.attach_to_ptr(Dt.size(), Dt.data());
-    x.attach_to_ptr(t.size(), 1, t.data());
-    /** */
-    alglib::real_1d_array c;
-    double par[2] = {(alpha0 == -100 ? ST_ALPHA : alpha0), (theta0 == -100 ? t.size() : theta0)};
-    c.setcontent(2, par);
-    /** */
-    double epsx = 0.000001;
-    size_t maxits = 0;
-    alglib::lsfitstate state;
-    alglib::lsfitreport rep;
-    alglib::real_1d_array bndl = "[0, 1]";
+    alglib::real_1d_array bndl = "[0.00000001, 0.00000001]";
     alglib::real_1d_array bndu = "[0.99999999, +inf]";
     alglib::real_1d_array scale;
-    double scales[2] = {1, theta0};
+    double scales[2] = {0.01, 1};
     scale.setcontent(2, scales);
-    alglib::lsfitcreatefg(x, y, c, state);
+
+    alglib::lsfitcreatef(x, y, c, 1e-5, state);
+    // alglib::lsfitcreatefg(x, y, c, state);
     alglib::lsfitsetcond(state, epsx, maxits);
     alglib::lsfitsetbc(state, bndl, bndu);
     alglib::lsfitsetscale(state, scale);
-    alglib::lsfitfit(state, function_cx_1_func, function_cx_1_grad);
+    alglib::lsfitfit(state, function_cx_1_func);
+    // alglib::lsfitfit(state, function_cx_1_func, function_cx_1_grad);
     alglib::lsfitresults(state, c, rep);
+    if ((rep.terminationtype <= 0) || (rep.iterationscount < 2))
+    {
+      std::cerr << "No solution param_opt_fit (" << rep.terminationtype << ") : varidx " << rep.varidx << ", rmserror " << rep.rmserror << ", niter " << rep.iterationscount << ", TaskRCond " << rep.taskrcond << ", AvgError " << rep.avgerror << ", MaxError " << rep.maxerror << ", R2 " << rep.r2 << ", WRMS " << rep.wrmserror << ", CovPar [[" << rep.covpar[0][0] << ", " << rep.covpar[0][1] << "], [" << rep.covpar[1][0] << ", " << rep.covpar[1][1] << "]], ErrPar [" << rep.errpar[0] << ", " << rep.errpar[1] << "], ErrCurve [" << rep.errcurve[0] << ", " << rep.errcurve[1] << "], Noise [" << rep.noise[0] << ", " << rep.noise[1] << "]]" << std::endl;
+      if (rep.terminationtype <= 0)
+        return {-INFINITY, -INFINITY};
+    }
     return {c[0], c[1]};
   }
 
@@ -142,7 +121,7 @@ namespace popt
     // IMPORTANT: gradient is calculated with respect to C, not to X
     func = c[1] / c[0] * (pow(1 + x[0] / c[1], c[0]) - 1);
     grad[0] = (c[1] * pow(1 + x[0] / c[1], c[0]) * log10(1 + x[0] / c[1]) - func) / c[0];
-    grad[1] = func / c[0] - x[0] / c[1] * pow(1 + x[0] / c[1], c[0] - 1);
+    grad[1] = (func - x[0] * pow(1 + x[0] / c[1], c[0] - 1)) / c[1];
   }
 
   std::pair<double, double> param_opt_ML(const bookprob::book &corpus, double alpha0,
@@ -423,7 +402,7 @@ namespace popt
     alglib::real_1d_array bndl = "[0, 1]";
     alglib::real_1d_array bndu = "[0.99999999, +inf]";
     alglib::real_1d_array scale;
-    double scales[2] = {1, theta0};
+    double scales[2] = {0.01, MIN(1, theta0 / 100)};
     scale.setcontent(2, scales);
 
     try
@@ -440,6 +419,12 @@ namespace popt
       throw alglib_exception;
     }
     alglib::lsfitresults(state, c, rep);
+    if ((rep.terminationtype <= 0) || (rep.iterationscount < 2))
+    {
+      std::cerr << "No solution param_opt_fit (" << rep.terminationtype << ") : varidx " << rep.varidx << ", rmserror " << rep.rmserror << ", niter " << rep.iterationscount << ", TaskRCond " << rep.taskrcond << ", AvgError " << rep.avgerror << ", MaxError " << rep.maxerror << ", R2 " << rep.r2 << ", WRMS " << rep.wrmserror << ", CovPar [[" << rep.covpar[0][0] << ", " << rep.covpar[0][1] << "], [" << rep.covpar[1][0] << ", " << rep.covpar[1][1] << "]], ErrPar [" << rep.errpar[0] << ", " << rep.errpar[1] << "], ErrCurve [" << rep.errcurve[0] << ", " << rep.errcurve[1] << "], Noise [" << rep.noise[0] << ", " << rep.noise[1] << "]]" << std::endl;
+      if (rep.terminationtype <= 0)
+        return {-INFINITY, -INFINITY};
+    }
     return {c[0], c[1]};
   }
   void function_cx_2_func(const alglib::real_1d_array &c, const alglib::real_1d_array &x, double &func, void *ptr)
