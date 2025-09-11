@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 el_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 libLZ = cdll.LoadLibrary(os.path.join(el_path, "bin/libLZ77dict.so"))
+_Q_lock = None
+_Q_partList = None
 
 
 def LZ77dict(text, window, Encoding):
@@ -86,7 +88,7 @@ def apply_association(bookSet, association):
 
 
 def fragments_numbers(
-    ids: tp.Union[np.array, tp.Sequence[np.array]],
+    ids: tp.Union[np.ndarray, tp.Sequence[np.ndarray]],
     booksAssociation: dict,
     excluded: list,
     fra: pd.DataFrame,
@@ -319,7 +321,7 @@ def attributor(bookList):
 def assign(
     attributions: tp.Mapping[
         tp.Sequence[int], tp.Mapping[float, tp.Mapping[str, tp.Sequence]]
-    ]
+    ],
 ) -> pd.DataFrame:
     """From the proposed attributions compute base statistics.
 

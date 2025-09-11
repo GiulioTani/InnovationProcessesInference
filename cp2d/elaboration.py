@@ -36,7 +36,7 @@
 import json
 import logging
 import multiprocessing as mp
-import os
+import os, contextlib
 import shutil
 import sys
 from glob import glob
@@ -215,14 +215,6 @@ class cp2dExperiment:
             raise
 
     def __del__(self):
-        # global logic._Q_association, logic._Q_excluded, logic._Q_which_slice, logic._Q_apt, logic._Q_fra, logic._Q_partList
-        logic._Q_association = None
-        logic._Q_excluded = None
-        logic._Q_which_slice = None
-        logic._Q_apt = None
-        logic._Q_fra = None
-        logic._Q_partList = None
-        logic._Q_F = None
         logic._Q_lock = None
 
     def run(self):
@@ -330,7 +322,7 @@ class cp2dExperiment:
         )
 
     @property
-    def sliceNum(self) -> int:
+    def sliceNum(self) -> int | None:
         return self.__numSlices
 
     @sliceNum.setter
@@ -1313,3 +1305,14 @@ def from_command_line(margOut=False, sliceSeparated=False, association={}, **kwa
         association=association,
         groundTruth=groundTruth,
     )
+
+
+@contextlib.contextmanager
+def cp2dExp(*args, **kwargs):
+    wrapper_object = cp2dExperiment(*args, **kwargs)
+    try:
+        yield wrapper_object
+    finally:
+        logic._Q_lock = None
+        del wrapper_object
+    return
