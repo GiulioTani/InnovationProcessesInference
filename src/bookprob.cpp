@@ -38,6 +38,7 @@ namespace bookprob
         N = oth.N;
         prefix = oth.prefix;
         order = oth.order;
+        entry_t = oth.entry_t;
         myP0 = oth.myP0;
         positions = oth.positions;
         fixWeight = -100;
@@ -54,6 +55,7 @@ namespace bookprob
         oth.N = 0;
         prefix = std::move(oth.prefix);
         order = std::move(oth.order);
+        entry_t = std::move(oth.entry_t);
         myP0 = std::move(oth.myP0);
         positions = std::move(oth.positions);
         fixWeight = -100;

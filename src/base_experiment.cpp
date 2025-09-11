@@ -845,7 +845,7 @@ namespace be
                         bp::book tmpSelf;
                         for (auto &au : newAuthors)
                             tmpSelf.append(*au.second);
-                        par = popt::param_opt_ML(tmpSelf);
+                        par = popt::param_opt_fit(tmpSelf);
                         par_lock.lock();
                         params.emplace(std::make_pair(std::make_pair(my_aut, par_slice), par));
                     }
@@ -873,7 +873,7 @@ namespace be
                             }
                             computing_par.emplace(std::make_pair(au.first, par_slice));
                             par_lock.unlock();
-                            par = popt::param_opt_ML(au.second);
+                            par = popt::param_opt_fit(au.second);
                             par_lock.lock();
                             params.emplace(std::make_pair(std::make_pair(au.first, par_slice), par));
                         }
@@ -1100,7 +1100,7 @@ namespace be
                                             bp::book tmpSelf;
                                             for (auto &au : shelf_short.at(aut)) for (auto &bk : au.second)
                                                 tmpSelf.append(*bk);
-                                            return std::make_pair(aut, popt::param_opt_ML(tmpSelf)); }));
+                                            return std::make_pair(aut, popt::param_opt_fit(tmpSelf)); }));
         }
         for (auto &&task : tasks)
         {

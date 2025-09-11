@@ -177,7 +177,7 @@ namespace bookprob
          * Takes care that \c alpha and \c theta are marked as uninitialised.
          *
          */
-        book() : alpha(-100), theta(-100) {};
+        book() : alpha(-100), theta(-100), N(0) {};
 
         /**
          * @brief Construct a new book object copying an existing one.
