@@ -25,6 +25,7 @@
 #include <unistd.h>
 // #include <algorithm>
 #define _USE_JOINT_PARAMS_
+#define FITTING_FUNCTION popt::param_opt_fit // param_opt_fit, param_opt_ML, or param_opt_fit2D
 // #define _USE_BOOK_COUNTS_
 // #define _FULL_AUTHOR_PARAMETERS_
 namespace be
@@ -845,7 +846,7 @@ namespace be
                         bp::book tmpSelf;
                         for (auto &au : newAuthors)
                             tmpSelf.append(*au.second);
-                        par = popt::param_opt_fit(tmpSelf);
+                        par = FITTING_FUNCTION(tmpSelf);
                         par_lock.lock();
                         params.emplace(std::make_pair(std::make_pair(my_aut, par_slice), par));
                     }
@@ -873,7 +874,7 @@ namespace be
                             }
                             computing_par.emplace(std::make_pair(au.first, par_slice));
                             par_lock.unlock();
-                            par = popt::param_opt_fit(au.second);
+                            par = FITTING_FUNCTION(au.second);
                             par_lock.lock();
                             params.emplace(std::make_pair(std::make_pair(au.first, par_slice), par));
                         }
@@ -1017,7 +1018,7 @@ namespace be
                             oss << std::this_thread::get_id() << " no_of_fragm " << e.what() << std::endl;
                             if (shelf_short.find(tmp_id.auth) == shelf_short.end())
                                 oss << "Missing author.\n";
-                            if (shelf_short.at(tmp_id.auth).find(tmp_id.book) == shelf_short.at(tmp_id.auth).end())
+                            else if (shelf_short.at(tmp_id.auth).find(tmp_id.book) == shelf_short.at(tmp_id.auth).end())
                                 oss << "Missing book.\n";
                             oss << "Comp\nA: " << tmp_id.auth << " B: " << tmp_id.book << " CA: " << tmp_id.comp_aut << "\n";
                             oss << "Target: " << target << " Pieces: " << pieces.size() << " Off: " << offNow;
@@ -1100,7 +1101,7 @@ namespace be
                                             bp::book tmpSelf;
                                             for (auto &au : shelf_short.at(aut)) for (auto &bk : au.second)
                                                 tmpSelf.append(*bk);
-                                            return std::make_pair(aut, popt::param_opt_fit(tmpSelf)); }));
+                                            return std::make_pair(aut, FITTING_FUNCTION(tmpSelf)); }));
         }
         for (auto &&task : tasks)
         {

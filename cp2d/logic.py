@@ -248,73 +248,67 @@ def attributor(bookList):
     offs, N, buck = parts
     ncids, cids, good, fn, lengths = preproc_pro(ab)
     truecid = support.associator(_Q_association)
-    with support.resultsExtractor(
-        _Q_proFile, buck, offs, N, ncids, cids, good, fn, lengths, _Q_F
-    ) as resGen:
-        ret = {}
-        for nowDelta in _Q_missingDelta:
-            try:
-                scores = resGen.attribute(nowDelta)
-                scores["cid"] = truecid[scores["cid"].astype(int)]
-                tmp = {}
-                for typ in ["FNN", "TOP", "WP"]:
-                    tarr = scores[scores[typ].argsort()][["cid", typ]]
-                    tmp[typ] = [
-                        [[truecid[int(q["cid"])]], q[typ]]
-                        for q in tarr[slice(None, _Q_topRes, -1)]
-                    ]
-                for typ in ["MR", "TMR", "WMR"]:
-                    tmp[typ] = top_performers(
-                        scores[scores[typ].argsort()][["cid", typ]], truecid
-                    )
+    try:
+        with support.resultsExtractor(
+            _Q_proFile, buck, offs, N, ncids, cids, good, fn, lengths, _Q_F
+        ) as resGen:
+            ret = {}
+            for nowDelta in _Q_missingDelta:
+                try:
+                    scores = resGen.attribute(nowDelta)
+                    scores["cid"] = truecid[scores["cid"].astype(int)]
+                    tmp = {}
+                    for typ in ["FNN", "TOP", "WP"]:
+                        tarr = scores[scores[typ].argsort()][["cid", typ]]
+                        tmp[typ] = [
+                            [[truecid[int(q["cid"])]], q[typ]]
+                            for q in tarr[slice(None, _Q_topRes, -1)]
+                        ]
+                    for typ in ["MR", "TMR", "WMR"]:
+                        tmp[typ] = top_performers(
+                            scores[scores[typ].argsort()][["cid", typ]], truecid
+                        )
 
-                if ab[0] > 0:
-                    tarr = scores[np.where(scores["cid"] == ab[0])]
-                    tmp["FRA"] = [np.sum(tarr[typ]) for typ in ["MR", "TMR", "WMR"]]
-                    if not tmp["FRA"]:
+                    if ab[0] > 0:
+                        tarr = scores[np.where(scores["cid"] == ab[0])]
+                        tmp["FRA"] = [np.sum(tarr[typ]) for typ in ["MR", "TMR", "WMR"]]
+                        if not tmp["FRA"]:
+                            tmp["FRA"] = [0, 0, 0]
+                    else:
                         tmp["FRA"] = [0, 0, 0]
-                else:
-                    tmp["FRA"] = [0, 0, 0]
-            except Exception as e:
-                print(f"{ab}: something strange. . .", e, file=sys.stderr)
-                dumb = [
-                    (
-                        [
-                            -10,
-                        ],
-                        -np.inf,
-                    ),
-                    (
-                        [
-                            -10,
-                        ],
-                        -np.inf,
-                    ),
-                ]
-                dumbi = [
-                    (
-                        [
-                            -10,
-                        ],
-                        -1,
-                    ),
-                    (
-                        [
-                            -10,
-                        ],
-                        -1,
-                    ),
-                ]
-                tmp = {
-                    "FNN": dumb,
-                    "TOP": dumb,
-                    "WP": dumb,
-                    "MR": dumbi,
-                    "TMR": dumbi,
-                    "WMR": dumbi,
-                    "FRA": [-1, -1, -1],
-                }
-            ret[nowDelta] = tmp
+                except Exception as e:
+                    print(f"{ab}: something strange. . .", e, file=sys.stderr)
+                    # fmt:off
+                    dumb = [([-10,],-np.inf,),([-10,],-np.inf,)]
+                    dumbi = [([-10,],-1,),([-10,],-1,)]
+                    # fmt:on
+                    tmp = {
+                        "FNN": dumb,
+                        "TOP": dumb,
+                        "WP": dumb,
+                        "MR": dumbi,
+                        "TMR": dumbi,
+                        "WMR": dumbi,
+                        "FRA": [-1, -1, -1],
+                    }
+                ret[nowDelta] = tmp
+    except RuntimeError as e:
+        print(f"{ab}: Filed to load results. . .", e, file=sys.stderr)
+        raise
+        # fmt:off
+        dumb = [([-10,],-np.inf,),([-10,],-np.inf,)]
+        dumbi = [([-10,],-1,),([-10,],-1,)]
+        # fmt:on
+        tmp = {
+            "FNN": dumb,
+            "TOP": dumb,
+            "WP": dumb,
+            "MR": dumbi,
+            "TMR": dumbi,
+            "WMR": dumbi,
+            "FRA": [-1, -1, -1],
+        }
+        ret = {d: tmp for d in _Q_missingDelta}
     return ab, ret
 
 

@@ -61,7 +61,7 @@ $(ODIR)/libattributor.so: $(ODIR)/attributor_Ctypes.o
 	@echo $@ shared object created
 
 $(ODIR)/attributor_Ctypes.o: attributor_Ctypes.cpp
-	g++ -c -fPIC -Wall -Ofast -Wextra $^ -o $@ $(INCLUDES)
+	g++ -c -fPIC $(CFLAGS) $^ -o $@ $(INCLUDES)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of

@@ -21,14 +21,18 @@ import numpy as np
 import shutil
 import configparser
 from multiprocessing import cpu_count
+# fmt: off
 from ctypes import Structure, addressof, byref, c_char, c_char_p, c_int, c_long, c_uint16, c_uint32, c_ushort, c_void_p, cdll, c_ulong, POINTER, cast, c_char_p, c_double
+# fmt: on
 import logging
 import time
 import pandas as pd
 import typing as tp
 from glob import glob
+
 el_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
+# fmt: off
 unicpunt = u"\u00B4\u02B9\u02BC\u02C8\u0301\u2018\u2019\u201B\u2032\u2034\u2037"+u"\u00AB\u00BB\u02BA\u030B\u030E\u201C\u201D\u201E\u201F\u2033\u2036\u3003\u301D\u301E"+u"\u00AD\u2010\u2011\u2012\u2013\u2014\u2212\u2015"+u"\u01C3\u2762"+u"\u266F"+u"\u066A\u2052"+u"\u066D\u204E\u2217\u2731\u00D7"+u"\u201A\uFE51\uFF64\u3001" + \
     u"\u00F7\u0338\u2044\u2215"+u"\u0589\u05C3\u2236"+u"\u203D"+u"\u27E6"+u"\u20E5\u2216"+u"\u301B"+u"\u02C4\u02C6\u0302\u2038\u2303"+u"\u02CB\u0300\u2035"+u"\u2983" + \
     u"\u01C0\u05C0\u2223\u2758\u00A6"+u"\u02DC\u0303\u2053\u223C\u301C"+u"\u2039\u2329\u27E8\u3008" + \
@@ -41,6 +45,7 @@ control = ''.join([chr(i) for i in range(int('a', 16))]+[chr(i) for i in range(
     int('e', 16), int('20', 16))]+[chr(i) for i in range(int('7f', 16), int('a0', 16))])
 
 nonAlfa = "!\"#$%&'()*+,-./:;<=>?@[\\]^`{_|}~«»§°1234567890"
+# fmt: on
 
 
 class cyclecount:
@@ -69,13 +74,13 @@ class cyclecount:
 
     def __add__(self, o):
         if isinstance(o, int):
-            return cyclecount(self._max, (self.now+o) % self._max)
+            return cyclecount(self._max, (self.now + o) % self._max)
         else:
             raise TypeError()
 
     def __mul__(self, o):
         if isinstance(o, int):
-            return cyclecount(self._max, (self.now*o) % self._max)
+            return cyclecount(self._max, (self.now * o) % self._max)
         else:
             raise TypeError()
 
@@ -109,33 +114,47 @@ class cyclecount:
         return float(self.now)
 
     def __floordiv__(self, o):
-        return self.now//o
+        return self.now // o
 
     def __truediv__(self, o):
-        return self.now/o
+        return self.now / o
 
     def __rtruediv__(self, o):
-        return o/self.now
+        return o / self.now
 
     def __mod__(self, o):
         return self.now % o
 
 
-class dataLoad (Structure):
-    _fields_ = [("fname", c_char_p), ("bucket", c_uint16), ("N", c_long), ("offs", c_long), ("ncids", c_long),
-                ("cids", POINTER(c_ushort)), ("goods", POINTER(c_char)), ("fn", c_long), ("lengths", POINTER(c_uint32)), ("F", c_uint32)]
+class dataLoad(Structure):
+    _fields_ = [
+        ("fname", c_char_p),
+        ("bucket", c_uint16),
+        ("N", c_long),
+        ("offs", c_long),
+        ("ncids", c_long),
+        ("cids", POINTER(c_ushort)),
+        ("goods", POINTER(c_char)),
+        ("fn", c_long),
+        ("lengths", POINTER(c_uint32)),
+        ("F", c_uint32),
+    ]
 
 
-_libRes = cdll.LoadLibrary(os.path.join(el_path, 'bin/libattributor.so'))
+_libRes = cdll.LoadLibrary(os.path.join(el_path, "bin/libattributor.so"))
 _libRes.load.argtypes = (dataLoad, POINTER(POINTER(c_double)))
 _libRes.load.restype = c_int
 _libRes.attribute.argtypes = (
-    POINTER(c_double), c_ulong, c_double, POINTER(POINTER(c_char)))
+    POINTER(c_double),
+    c_ulong,
+    c_double,
+    POINTER(POINTER(c_char)),
+)
 _libRes.attribute.restype = c_int
 _libRes.clean.argtypes = (c_void_p,)
 
 
-class pointerManager ():
+class pointerManager:
     """This pointer manager is intended to be the only owner of the pointer.
     If you copy the raw pointer around, expect double free or corruption."""
 
@@ -147,7 +166,11 @@ class pointerManager ():
         if ptr is None or isinstance(ptr, (POINTER(c_char), POINTER(c_double))):
             self.clean()
             self.__ptr = ptr
-            if self.__ptr is not None and self.__ptr != POINTER(c_char)() and self.__ptr != POINTER(c_double)():
+            if (
+                self.__ptr is not None
+                and self.__ptr != POINTER(c_char)()
+                and self.__ptr != POINTER(c_double)()
+            ):
                 self.__valid = True
             else:
                 self.__valid = False
@@ -184,11 +207,22 @@ class pointerManager ():
         self.clean()
 
 
-class resultsExtractor ():
-    def __init__(self, proFile, bucket, offs, N, ncids, cids, good, fn, lengths, F) -> None:
-        self.data = dataLoad(proFile.encode(), bucket, N, offs, ncids, cids.ctypes.data_as(
-            POINTER(c_ushort)), good.ctypes.data_as(POINTER(c_char)), fn, lengths.ctypes.data_as(
-            POINTER(c_uint32)), F)
+class resultsExtractor:
+    def __init__(
+        self, proFile, bucket, offs, N, ncids, cids, good, fn, lengths, F
+    ) -> None:
+        self.data = dataLoad(
+            proFile.encode(),
+            bucket,
+            N,
+            offs,
+            ncids,
+            cids.ctypes.data_as(POINTER(c_ushort)),
+            good.ctypes.data_as(POINTER(c_char)),
+            fn,
+            lengths.ctypes.data_as(POINTER(c_uint32)),
+            F,
+        )
         self.__res = pointerManager()
         self.__proc = pointerManager()
         self.__oldDelta = None
@@ -202,17 +236,21 @@ class resultsExtractor ():
         self.__proc.clean()
 
     def __check_result(self, val, msg=""):
-        errors = {1: "Cannot open file", 2: "File ended too soon",
-                  3: "Unknown I/O error", 4: "Unknown fatal error"}
+        errors = {
+            1: "Cannot open file",
+            2: "File ended too soon",
+            3: "Unknown I/O error",
+            4: "Unknown fatal error",
+            5: "Incompatible number of results",
+        }
         if val in errors:
             raise RuntimeError(f"Failed {msg}. {errors[val]}.")
         return True
 
     def load(self):
         tmp_p = POINTER(c_double)()
-        ret = _libRes.load(
-            self.data, byref(tmp_p))
-        if self.__check_result(ret, "load "+self.data.fname.decode()):
+        ret = _libRes.load(self.data, byref(tmp_p))
+        if self.__check_result(ret, "load " + self.data.fname.decode()):
             self.__res.ptr = tmp_p
 
         return self
@@ -224,19 +262,19 @@ class resultsExtractor ():
         self.__oldDelta = delta
         deltac = c_double(delta)
         if not self.__res.valid:
-            raise RuntimeError(str(resultsExtractor) +
-                               " not initialised (use 'load').")
+            raise RuntimeError(str(resultsExtractor) + " not initialised (use 'load').")
         tmp_p = POINTER(c_char)()
-        res = _libRes.attribute(
-            self.__res.ptr, self.data.fn, deltac, byref(tmp_p))
+        res = _libRes.attribute(self.__res.ptr, self.data.fn, deltac, byref(tmp_p))
         if self.__check_result(res, "attribution"):
             self.__proc.ptr = tmp_p
 
         reslen = -res
-        self.__oldAttri = np.frombuffer(cast(self.__proc.ptr, POINTER(
-            c_char*(reslen*38))).contents, dtype='u2, f8, f8, f8, i4, i4, i4', count=reslen)
-        self.__oldAttri.dtype.names = (
-            "cid", "FNN", "TOP", "WP", "MR", "TMR", "WMR")
+        self.__oldAttri = np.frombuffer(
+            cast(self.__proc.ptr, POINTER(c_char * (reslen * 38))).contents,
+            dtype="u2, f8, f8, f8, i4, i4, i4",
+            count=reslen,
+        )
+        self.__oldAttri.dtype.names = ("cid", "FNN", "TOP", "WP", "MR", "TMR", "WMR")
         return self.__oldAttri
 
     @property
@@ -314,27 +352,38 @@ def get_input(msg, dir=False, num=False):
     """
     if dir and num:
         raise RuntimeError(
-            "Cant get a directory and a number at the same time.\nOnly one of dir and num can be True.")
+            "Cant get a directory and a number at the same time.\nOnly one of dir and num can be True."
+        )
 
     if dir:
         if not sys.stdout.isatty() or not sys.stdin.isatty():
             try:
                 ipy_str = str(type(get_ipython()))
                 dirName = ""
-                while os.path.isdir(dirName):  # stupid way to avoid existing default name
+                while os.path.isdir(
+                    dirName
+                ):  # stupid way to avoid existing default name
                     dirName += "w"
                 while not os.path.isdir(dirName):
                     dirName = input(
-                        msg+(" Directory must exists. " if dirName and dirName[0] != 'w' else " "))
+                        msg
+                        + (
+                            " Directory must exists. "
+                            if dirName and dirName[0] != "w"
+                            else " "
+                        )
+                    )
                 return dirName
             except:
-                raise RuntimeError("Input needed but no tty output: "+msg)
+                raise RuntimeError("Input needed but no tty output: " + msg)
         dirName = ""
         while os.path.isdir(dirName):  # stupid way to avoid existing default name
             dirName += "w"
         while not os.path.isdir(dirName):
             dirName = input(
-                msg+(" Directory must exists. " if dirName and dirName[0] != 'w' else " "))
+                msg
+                + (" Directory must exists. " if dirName and dirName[0] != "w" else " ")
+            )
         return dirName
     elif num:
         if not sys.stdout.isatty() or not sys.stdin.isatty():
@@ -343,7 +392,7 @@ def get_input(msg, dir=False, num=False):
                 number = np.nan
                 while np.isnan(number):
                     try:
-                        number = float(input(msg+" "))
+                        number = float(input(msg + " "))
                     except ValueError:
                         print("Invalid. Insert a number: ")
                 return number
@@ -352,7 +401,7 @@ def get_input(msg, dir=False, num=False):
         number = np.nan
         while np.isnan(number):
             try:
-                number = float(input(msg+" "))
+                number = float(input(msg + " "))
             except ValueError:
                 print("Invalid. Insert a number: ")
         return number
@@ -362,7 +411,7 @@ def get_input(msg, dir=False, num=False):
                 ipy_str = str(type(get_ipython()))
                 ch = -1
                 while ch == -1:
-                    tmp = input(msg+" [y/n] ")
+                    tmp = input(msg + " [y/n] ")
                     if tmp.lower() in ["1", "y", "yes"]:
                         ch = True
                     elif tmp.lower() in ["0", "n", "no"]:
@@ -374,7 +423,7 @@ def get_input(msg, dir=False, num=False):
                 return False
         ch = -1
         while ch == -1:
-            tmp = input(msg+" [y/n] ")
+            tmp = input(msg + " [y/n] ")
             if tmp.lower() in ["1", "y", "yes"]:
                 ch = True
             elif tmp.lower() in ["0", "n", "no"]:
@@ -387,14 +436,15 @@ def get_input(msg, dir=False, num=False):
 try:
     try:
         ipy_str = str(type(get_ipython()))
-        if 'zmqshell' in ipy_str:
+        if "zmqshell" in ipy_str:
             from tqdm.notebook import tqdm
-        if 'terminal' in ipy_str:
+        if "terminal" in ipy_str:
             from tqdm import tqdm
     except:
         if sys.stderr.isatty():
             from tqdm import tqdm
         else:
+
             def tqdm(iterable=None, desc=None, leave=True, *args, **kwargs):
                 if desc:
                     print(desc, file=sys.stderr, end="\n" if leave else "\r")
@@ -402,15 +452,21 @@ try:
                 if iterable is not None:
                     return iterable.__iter__()
                 else:
-                    class FakeT ():
+
+                    class FakeT:
                         def __init__(self) -> None:
                             pass
-                        def write (self, *args, **kwargs):
+
+                        def write(self, *args, **kwargs):
                             print(*args, **kwargs)
-                        def update (self, *args, **kwargs):
+
+                        def update(self, *args, **kwargs):
                             pass
+
                     return FakeT()
+
 except:
+
     def tqdm(iterable, desc=None, leave=True, *args, **kwargs):
         if desc:
             print(desc, file=sys.stderr, end="\n" if leave else "\r")
@@ -431,7 +487,7 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
     If no destination folder is passed as argument prompts the user for one.
 
     Args:
-        dir:    The directory where the file will be created. 
+        dir:    The directory where the file will be created.
     """
     if useGlobal:
         dir = globalDir
@@ -440,8 +496,7 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
     elif get_input("You want the configuration to be global?"):
         dir = globalDir
     else:
-        dir = get_input(
-            "Were do you want to create the config file?", True)
+        dir = get_input("Were do you want to create the config file?", True)
 
     config = configparser.ConfigParser()
     numCpus = cpu_count()
@@ -449,24 +504,27 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
         numCpus = -1
         while numCpus <= 0:
             numCpus = int(
-                get_input("Insert the desired number of CPUs to work with:", num=True))
+                get_input("Insert the desired number of CPUs to work with:", num=True)
+            )
             if numCpus <= 0:
                 print(f"You want at least one CPU working.")
     config["numcomp"] = {"numCpus": str(numCpus)}
-    buffer = numCpus+1
+    buffer = numCpus + 1
     while buffer >= numCpus or buffer < 0:
         buffer = int(
-            get_input("How many processors you want to leave always free?", num=True))
+            get_input("How many processors you want to leave always free?", num=True)
+        )
         if buffer >= numCpus or buffer < 0:
             print(f"You want at least one of your {numCpus} CPUs working.")
     config["numcomp"]["buffer"] = str(buffer)
-    if get_input(f"You want to use the same numbrer of {numCpus-buffer} CPUs in every parallelized section?"):
-        config["elaboration"] = {"workers": str(numCpus-buffer)}
+    if get_input(
+        f"You want to use the same numbrer of {numCpus-buffer} CPUs in every parallelized section?"
+    ):
+        config["elaboration"] = {"workers": str(numCpus - buffer)}
     else:
-        workers = numCpus+1
+        workers = numCpus + 1
         while workers > numCpus or workers <= 0:
-            workers = int(
-                get_input("How many processors you want to use?", num=True))
+            workers = int(get_input("How many processors you want to use?", num=True))
             if workers > numCpus or workers <= 0:
                 print(f"You want at least one of your {numCpus} CPUs working.")
         config["elaboration"] = {"workers": str(workers)}
@@ -474,40 +532,53 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
     limit = -1
     while limit < 0 or limit > numCpus:
         limit = int(
-            get_input("Set the maximum number of CPUs to leave to others:", num=True))
+            get_input("Set the maximum number of CPUs to leave to others:", num=True)
+        )
         if limit < 0 or limit > numCpus:
             print(f"Can't stop more CPUs than you have.")
         elif limit == numCpus:
-            if get_input("Are you sure you want to stop completely if someone else joins?"):
+            if get_input(
+                "Are you sure you want to stop completely if someone else joins?"
+            ):
                 break
             else:
                 limit = -1
         elif limit < buffer:
-            if get_input("A limit smaller than the buffer will disable the job manager, are you sure?"):
+            if get_input(
+                "A limit smaller than the buffer will disable the job manager, are you sure?"
+            ):
                 break
             else:
                 limit = -1
     config["numcomp"]["limit"] = str(limit)
 
     timeout = 0.5
-    if not get_input(f"I suggest {timeout} s between checks if the main computation has finished, accept?"):
+    if not get_input(
+        f"I suggest {timeout} s between checks if the main computation has finished, accept?"
+    ):
         timeout = -1
         while timeout < 0:
             timeout = get_input("Set the timeout:", num=True)
             if timeout == 0:
-                if get_input("A null timeout may break the interactive monitoring ad be resource intensive, are you sure?"):
+                if get_input(
+                    "A null timeout may break the interactive monitoring ad be resource intensive, are you sure?"
+                ):
                     break
                 else:
                     timeout = -1
     config["numcomp"]["timeout"] = str(timeout)
 
     cpuThreshold = 10
-    if not get_input(f"I suggest a {cpuThreshold}% CPU threshold to consider a process from another user, accept?"):
+    if not get_input(
+        f"I suggest a {cpuThreshold}% CPU threshold to consider a process from another user, accept?"
+    ):
         cpuThreshold = -1
         while cpuThreshold < 0 or cpuThreshold > 100:
             cpuThreshold = get_input("Set the cpuThreshold:", num=True)
             if cpuThreshold == 0:
-                if get_input("A null cpuThreshold will stop your processes for every shell opened by other users, are you sure?"):
+                if get_input(
+                    "A null cpuThreshold will stop your processes for every shell opened by other users, are you sure?"
+                ):
                     break
                 else:
                     cpuThreshold = -1
@@ -519,7 +590,7 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
         while again:
             Encoding = input("Insert a valid encoding name: ")
             try:
-                b'qq'.decode(Encoding)
+                b"qq".decode(Encoding)
             except LookupError:
                 continue
             again = False
@@ -528,14 +599,19 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
     config["elaboration"]["Encoding"] = Encoding
 
     maxPreloadResultsMB = 750
-    print("With big corpora and small fragments result files may grow large (>1GB).\nLoading results a bit at the time is slower but uses less memory.")
-    if not get_input(f"I suggest to switch mode for files larger than  {maxPreloadResultsMB} MB, accept?\n\t(Increase [decrease] if your RAM is huge [tiny])"):
+    print(
+        "With big corpora and small fragments result files may grow large (>1GB).\nLoading results a bit at the time is slower but uses less memory."
+    )
+    if not get_input(
+        f"I suggest to switch mode for files larger than  {maxPreloadResultsMB} MB, accept?\n\t(Increase [decrease] if your RAM is huge [tiny])"
+    ):
         maxPreloadResultsMB = -1
         while maxPreloadResultsMB < 0:
-            maxPreloadResultsMB = get_input(
-                "Set the maxPreloadResultsMB:", num=True)
+            maxPreloadResultsMB = get_input("Set the maxPreloadResultsMB:", num=True)
             if maxPreloadResultsMB == 0:
-                if get_input("A null maxPreloadResultsMB will disable preloading altogether, are you sure?"):
+                if get_input(
+                    "A null maxPreloadResultsMB will disable preloading altogether, are you sure?"
+                ):
                     break
                 else:
                     maxPreloadResultsMB = -1
@@ -543,24 +619,33 @@ def build_config(globalDir, outputDir="", useGlobal=False, **kwargs):
 
     if os.path.isfile(os.path.join(dir, "config.ini")):
         if not os.path.isfile(os.path.join(dir, "config_old.ini")):
-            shutil.move(os.path.join(dir, "config.ini"),
-                        os.path.join(dir, "config_old.ini"))
+            shutil.move(
+                os.path.join(dir, "config.ini"), os.path.join(dir, "config_old.ini")
+            )
             print("A config file was already there, renamed config_old.ini.")
         else:
             i = 0
             while os.path.isfile(os.path.join(dir, f"config_old{i}.ini")):
                 i += 1
-            shutil.move(os.path.join(dir, "config.ini"),
-                        os.path.join(dir, f"config_old{i}.ini"))
-            print(
-                f"A config file was already there, renamed config_old{i}.ini.")
+            shutil.move(
+                os.path.join(dir, "config.ini"), os.path.join(dir, f"config_old{i}.ini")
+            )
+            print(f"A config file was already there, renamed config_old{i}.ini.")
     with open(os.path.join(dir, "config.ini"), "w") as configfile:
         config.write(configfile)
     print("Configuration complete.")
     return os.path.join(dir, "config.ini")
 
 
-def data_preprocessing(inFolder="", outFolder="", authorFiles: bool = False, sep: str = '_', bookStart: int = 2, extension: str = "txt", **kwargs):
+def data_preprocessing(
+    inFolder="",
+    outFolder="",
+    authorFiles: bool = False,
+    sep: str = "_",
+    bookStart: int = 2,
+    extension: str = "txt",
+    **kwargs,
+):
     """
     Prepares raw .txt books for the analisys.
 
@@ -584,8 +669,10 @@ def data_preprocessing(inFolder="", outFolder="", authorFiles: bool = False, sep
             outFolder = get_input("Insert output folder: ", True)
 
     if os.path.isfile(os.path.join(inFolder, "encoding.dat")):
-        shutil.copy(os.path.join(inFolder, "encoding.dat"),
-                    os.path.join(outFolder, "encoding.dat"))
+        shutil.copy(
+            os.path.join(inFolder, "encoding.dat"),
+            os.path.join(outFolder, "encoding.dat"),
+        )
         if authorFiles:
             with open(os.path.join(inFolder, "encoding.dat")) as fp:
                 encoding = fp.read()
@@ -594,33 +681,44 @@ def data_preprocessing(inFolder="", outFolder="", authorFiles: bool = False, sep
                     os.unlink(os.path.join(outFolder, file))
 
     elif authorFiles:
-        raise FileNotFoundError(os.path.join(
-            inFolder, "encoding.dat")+" is missing, can't create author files.")
+        raise FileNotFoundError(
+            os.path.join(inFolder, "encoding.dat")
+            + " is missing, can't create author files."
+        )
     authors = []
     books = {}
     for name in sorted(os.listdir(inFolder)):
-        if name[0] != '.' and name.endswith(extension):
+        if name[0] != "." and name.endswith(extension):
             baseName = os.path.splitext(name)[0]
             parts = baseName.split(sep)
             if not parts[0] in authors:
                 authors.append(parts[0])
             try:
-                books[authors.index(parts[0])].append(
-                    sep.join(parts[bookStart:]))
+                books[authors.index(parts[0])].append(sep.join(parts[bookStart:]))
             except:
                 books[authors.index(parts[0])] = [
-                    sep.join(parts[bookStart:]), ]
+                    sep.join(parts[bookStart:]),
+                ]
             if authorFiles:
-                with open(os.path.join(outFolder, f"A{authors.index(parts[0])+1}.txt"), "a", encoding=encoding) as fout, open(os.path.join(inFolder, name), encoding=encoding) as fin:
+                with open(
+                    os.path.join(outFolder, f"A{authors.index(parts[0])+1}.txt"),
+                    "a",
+                    encoding=encoding,
+                ) as fout, open(os.path.join(inFolder, name), encoding=encoding) as fin:
                     text_b = fin.read().replace("\n", " ")
-                    if text_b[0] == '#':
+                    if text_b[0] == "#":
                         text_b = "".join(["_added_", text_b])
                     print(
-                        f"# {len(books[authors.index(parts[0])])}", text_b, sep="\n", file=fout)
+                        f"# {len(books[authors.index(parts[0])])}",
+                        text_b,
+                        sep="\n",
+                        file=fout,
+                    )
             else:
                 newName = f"A{authors.index(parts[0])+1}B{len(books[authors.index(parts[0])])}.txt"
-                shutil.copy(os.path.join(inFolder, name),
-                            os.path.join(outFolder, newName))
+                shutil.copy(
+                    os.path.join(inFolder, name), os.path.join(outFolder, newName)
+                )
     with open(os.path.join(outFolder, "authorNames.dat"), "w") as fp:
         for n, auth in enumerate(authors, start=1):
             print(n, auth, file=fp)
@@ -628,7 +726,7 @@ def data_preprocessing(inFolder="", outFolder="", authorFiles: bool = False, sep
     with open(os.path.join(outFolder, "bookNames.dat"), "w") as fp:
         for A in books:
             for n, book in enumerate(books[A], start=1):
-                print(A+1, n, book, file=fp)
+                print(A + 1, n, book, file=fp)
 
 
 def corpus_shuffler(inFolder="", preserveDist=None, **kwargs):
@@ -637,25 +735,28 @@ def corpus_shuffler(inFolder="", preserveDist=None, **kwargs):
         inFolder = get_input("Insert input folder: ", True)
     if preserveDist is None:
         preserveDist = get_input(
-            "Do you want to preserve the distribution of authors' size? ")
-    books = [a.split(".")[0]
-             for a in os.listdir(inFolder) if a.endswith("txt")]
+            "Do you want to preserve the distribution of authors' size? "
+        )
+    books = [a.split(".")[0] for a in os.listdir(inFolder) if a.endswith("txt")]
     shelf = {}
     for book in books:
         aut = book.split("B")[0]
         try:
             shelf[aut].append(book)
         except:
-            shelf[aut] = [book, ]
-    order = [a for a in sorted(
-        shelf, reverse=True, key=lambda x: len(shelf[x]))]
+            shelf[aut] = [
+                book,
+            ]
+    order = [a for a in sorted(shelf, reverse=True, key=lambda x: len(shelf[x]))]
     if preserveDist:
         shelfsize = [(i, len(shelf[a])) for i, a in enumerate(shelf)]
         shelfsize.sort(reverse=True, key=lambda x: x[1])
     else:
         tot = sum([len(shelf[a]) for a in shelf])
-        shelfsize = [(i, tot//len(shelf)+(1 if i < tot % len(shelf) else 0))
-                     for i in range(len(shelf))]
+        shelfsize = [
+            (i, tot // len(shelf) + (1 if i < tot % len(shelf) else 0))
+            for i in range(len(shelf))
+        ]
     newshelf = [[] for _ in shelf]
     autN = cyclecount(len(shelf))
     for aut in order:
@@ -664,20 +765,24 @@ def corpus_shuffler(inFolder="", preserveDist=None, **kwargs):
                 autN += 1
             newshelf[int(autN)].append(book)
             autN += 1
-    outdir = os.path.dirname(os.path.join(inFolder, ""))+"-shuf0"
+    outdir = os.path.dirname(os.path.join(inFolder, "")) + "-shuf0"
     i = 1
     while os.path.exists(outdir):
-        outdir = outdir[:-1]+str(i)
+        outdir = outdir[:-1] + str(i)
         i += 1
     os.mkdir(outdir)
     print("Created: ", outdir)
     for n, autlist in enumerate(newshelf, start=1):
         for b, tit in enumerate(autlist, start=1):
-            shutil.copyfile(os.path.join(
-                inFolder, f"{tit}.txt"), os.path.join(outdir, f"A{n}B{b}.txt"))
+            shutil.copyfile(
+                os.path.join(inFolder, f"{tit}.txt"),
+                os.path.join(outdir, f"A{n}B{b}.txt"),
+            )
     if os.path.isfile(os.path.join(inFolder, f"encoding.dat")):
-        shutil.copyfile(os.path.join(inFolder, f"encoding.dat"),
-                        os.path.join(outdir, f"encoding.dat"))
+        shutil.copyfile(
+            os.path.join(inFolder, f"encoding.dat"),
+            os.path.join(outdir, f"encoding.dat"),
+        )
 
 
 class lockable_dict(dict):
@@ -696,7 +801,8 @@ class lockable_dict(dict):
     def __setitem__(self, key, value):
         if self.__lock:
             raise ValueError(
-                "Can't change parameters when the experiment has already begun.")
+                "Can't change parameters when the experiment has already begun."
+            )
         if key in self.__checks:
             if self.__checks[key](value):
                 dict.__setitem__(self, key, value)
@@ -709,15 +815,13 @@ class lockable_dict(dict):
         if not self.__lock:
             self.__lock = True
         else:
-            raise UserWarning("{v} already locked.".format(
-                v=self.__class__.__name__))
+            raise UserWarning("{v} already locked.".format(v=self.__class__.__name__))
 
     def unlock(self):
         if self.__lock:
             self.__lock = False
         else:
-            raise UserWarning("{v} already unlocked.".format(
-                v=self.__class__.__name__))
+            raise UserWarning("{v} already unlocked.".format(v=self.__class__.__name__))
 
     def islocked(self):
         return self.__lock
@@ -729,24 +833,25 @@ class lockable_dict(dict):
                     self.__checks[key] = check
                 else:
                     raise ValueError(
-                        f"Checks must be callable. Check the check for {key}.")
+                        f"Checks must be callable. Check the check for {key}."
+                    )
         for key, check in kwargs.items():
             if callable(check):
                 self.__checks[key] = check
             else:
-                raise ValueError(
-                    f"Checks must be callable. Check the check for {key}.")
+                raise ValueError(f"Checks must be callable. Check the check for {key}.")
 
     def run_checks(self):
         for key, value in self.items():
             if key in self.__checks:
                 if not self.__checks[key](value):
                     raise ValueError(
-                        f"Value \"{value}\" of type {type(value)} for element {key} invalid.")
+                        f'Value "{value}" of type {type(value)} for element {key} invalid.'
+                    )
 
     def __getstate__(self):
         tmpdict = {k: v for k, v in self.__dict__.items()}
-        tmpdict['_lockable_dict__checks'] = {}
+        tmpdict["_lockable_dict__checks"] = {}
         return tmpdict
 
     def __setstate__(self, state):
@@ -764,17 +869,18 @@ def numpy_json(obj):
 
 def auth_books_iterator(path, encoding, auth_file: bool):
     if auth_file:
-        with open(path+".txt", encoding=encoding) as f_in:
+        with open(path + ".txt", encoding=encoding) as f_in:
             bn = -1
             known = set()
             for line in f_in:
-                if line[0] == '#':
+                if line[0] == "#":
                     if bn > 0:
                         yield bn, ""
                     bn = int(line[1:].strip())
                     if bn in known:
                         raise FileExistsError(
-                            f"Already found a document {bn} in author {path}.")
+                            f"Already found a document {bn} in author {path}."
+                        )
                     known.add(bn)
                 elif line.strip():
                     if bn < 0:
@@ -784,7 +890,7 @@ def auth_books_iterator(path, encoding, auth_file: bool):
                     yield bn, line.strip()
                     bn = -1
     else:
-        for fileName in glob(path+"B*.txt"):
+        for fileName in glob(path + "B*.txt"):
             bn = os.path.basename(fileName).split("B")[1].split(".")[0]
             with open(fileName, encoding=encoding) as f_in:
                 text_b = f_in.read()
@@ -806,17 +912,19 @@ def progress_wait(extraction_jobs):
     print(f"\r                                          ", end="")
     done = -1
     while remaining_jobs:
-        new_done = len(extraction_jobs)-len(remaining_jobs)
+        new_done = len(extraction_jobs) - len(remaining_jobs)
         if new_done != done:
-            switch_log = (switch_log+1) % 5
+            switch_log = (switch_log + 1) % 5
             done = new_done
             if not switch_log:
-                logger.info(
-                    f"Extracted {done} files")
+                logger.info(f"Extracted {done} files")
             else:
-                logger.debug(
-                    f"Extracted {done} files")
-            print(f"\r{(1-len(remaining_jobs)/len(extraction_jobs))*100:6.6}%  \t({done:{len(str(len(extraction_jobs)+1))}})", end="", flush=True)
+                logger.debug(f"Extracted {done} files")
+            print(
+                f"\r{(1-len(remaining_jobs)/len(extraction_jobs))*100:6.6}%  \t({done:{len(str(len(extraction_jobs)+1))}})",
+                end="",
+                flush=True,
+            )
         time.sleep(1)
         remaining_jobs = [j for j in remaining_jobs if not j.ready()]
 
@@ -827,7 +935,8 @@ def load_book_len(dataDir, Encoding="latin1", output="var"):
 
     if not os.path.isdir(os.path.join(dataDir, "wnt")):
         raise FileNotFoundError(
-            "The wnt directory is missing. Maybe not created or already cleaned.")
+            "The wnt directory is missing. Maybe not created or already cleaned."
+        )
 
     booktok = {}
     for file in os.listdir(os.path.join(dataDir, "wnt")):
@@ -855,32 +964,49 @@ class associator:
         assert isinstance(asso, dict)
         self.__asso = asso
         if asso:
+
             def getitem(self, it):
                 try:
                     return self.__asso[it]
                 except:
                     return it
+
         else:
+
             def getitem(self, it):
                 return it
+
         self.getitem = getitem
 
     def __getitem__(self, it):
-        if hasattr(it, '__iter__'):
+        if hasattr(it, "__iter__"):
             return np.array([self.getitem(self, i) for i in it])
         return self.getitem(self, it)
 
 
-def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shallow=False, sliceSeparated: tp.Optional[int] = None, slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None, authors: tp.Sequence[int] = None):
+def PAN11_stats(
+    attribution,
+    mode="strict",
+    groundTruth=None,
+    reject=None,
+    shallow=False,
+    sliceSeparated: tp.Optional[int] = None,
+    slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None,
+    authors: tp.Sequence[int] = None,
+):
     """Attribution is a dictionary as returned from cp2d.elaboration.cp2dExperiment.attributions.
-        Mode is one of strict, optimist, partial describing what to do when more than one author
-        is proposed for the same text.
-        groundTruth is a dictionary whose keys are the numbers of the books with unknown author
-        and the values are the number of the true authors.
-        reject is a callable that receives a tuple with (author number, book number) and the
-        attribution info with number of the first and second classified authors and their score."""
+    Mode is one of strict, optimist, partial describing what to do when more than one author
+    is proposed for the same text.
+    groundTruth is a dictionary whose keys are the numbers of the books with unknown author
+    and the values are the number of the true authors.
+    reject is a callable that receives a tuple with (author number, book number) and the
+    attribution info with number of the first and second classified authors and their score.
+    """
     if not reject:
-        def reject(ab, r): return False
+
+        def reject(ab, r):
+            return False
+
     if groundTruth:
         if isinstance(groundTruth, str):
             with open(groundTruth) as fp:
@@ -889,7 +1015,8 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
             groTru = groundTruth
         else:
             raise TypeError(
-                "groundTruth should be a dictionary(int->int) or a (relative)path to a json containing such dictionary.")
+                "groundTruth should be a dictionary(int->int) or a (relative)path to a json containing such dictionary."
+            )
     if authors is None:
         authors = set((ab[0] for ab in attribution))
 
@@ -924,8 +1051,16 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
     weigh = [{} for __ in range(sliceSeparated)]
     macro = [{} for __ in range(sliceSeparated)]
     for delta in [1] if shallow else attribution[sab]:
-        stats = [{a: {"co": {"FNN": 0, "TOP": 0, "WP": 0, "MR": 0, "TMR": 0, "WMR": 0},
-                      "at": {"FNN": 0, "TOP": 0, "WP": 0, "MR": 0, "TMR": 0, "WMR": 0}} for a in authors} for __ in range(sliceSeparated)]
+        stats = [
+            {
+                a: {
+                    "co": {"FNN": 0, "TOP": 0, "WP": 0, "MR": 0, "TMR": 0, "WMR": 0},
+                    "at": {"FNN": 0, "TOP": 0, "WP": 0, "MR": 0, "TMR": 0, "WMR": 0},
+                }
+                for a in authors
+            }
+            for __ in range(sliceSeparated)
+        ]
         for ab in attribution:
             if groundTruth and not ab[0]:
                 tau = groTru[ab[1]]
@@ -935,7 +1070,9 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
                 continue
             if tau < 0:
                 continue
-            for t, r in attribution[ab].items() if shallow else attribution[ab][delta].items():
+            for t, r in (
+                attribution[ab].items() if shallow else attribution[ab][delta].items()
+            ):
                 if t != "FRA":
                     try:
                         winners = r[0][0]
@@ -945,10 +1082,10 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
                             if mode == "optimist" or len(winners) == 1:
                                 stats[slices[ab]][tau]["co"][t] += 1
                             elif mode == "partial":
-                                stats[slices[ab]][tau]["co"][t] += 1/len(winners)
+                                stats[slices[ab]][tau]["co"][t] += 1 / len(winners)
                         if mode == "partial":
                             for A in winners:
-                                stats[slices[ab]][A]["at"][t] += 1/len(winners)
+                                stats[slices[ab]][A]["at"][t] += 1 / len(winners)
                         else:
                             for A in winners:
                                 stats[slices[ab]][A]["at"][t] += 1
@@ -962,28 +1099,29 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
                 if not TB[AO[a], i]:
                     continue
                 PRaF[i][a] = {"P": {}, "R": {}, "F": {}, "a": TB[AO[a], i]}
-                for t in s[a]['co']:
-                    if not s[a]['co'][t]:
-                        PRaF[i][a]['P'][t] = 0
-                        PRaF[i][a]['F'][t] = 0
-                        PRaF[i][a]['R'][t] = 0
+                for t in s[a]["co"]:
+                    if not s[a]["co"][t]:
+                        PRaF[i][a]["P"][t] = 0
+                        PRaF[i][a]["F"][t] = 0
+                        PRaF[i][a]["R"][t] = 0
                     else:
-                        PRaF[i][a]['P'][t] = s[a]['co'][t]/s[a]['at'][t]
-                        PRaF[i][a]['R'][t] = s[a]['co'][t]/TB[AO[a], i]
-                        PRaF[i][a]['F'][t] = 2*s[a]['co'][t] / \
-                            (TB[AO[a], i]+s[a]['at'][t])
+                        PRaF[i][a]["P"][t] = s[a]["co"][t] / s[a]["at"][t]
+                        PRaF[i][a]["R"][t] = s[a]["co"][t] / TB[AO[a], i]
+                        PRaF[i][a]["F"][t] = (
+                            2 * s[a]["co"][t] / (TB[AO[a], i] + s[a]["at"][t])
+                        )
 
         for i, prf in enumerate(PRaF):
             weigh[i][delta] = {}
             macro[i][delta] = {}
-            for S in ['P', 'F', 'R']:
+            for S in ["P", "F", "R"]:
                 weigh[i][delta][S] = {}
                 macro[i][delta][S] = {}
                 for t in ["FNN", "TOP", "WP", "MR", "TMR", "WMR"]:
-                    weigh[i][delta][S][t] = np.average([prf[a][S][t] for a in prf], weights=[
-                        prf[a]['a'] for a in prf])
-                    macro[i][delta][S][t] = np.average(
-                        [prf[a][S][t] for a in prf])
+                    weigh[i][delta][S][t] = np.average(
+                        [prf[a][S][t] for a in prf], weights=[prf[a]["a"] for a in prf]
+                    )
+                    macro[i][delta][S][t] = np.average([prf[a][S][t] for a in prf])
     if shallow:
         weigh = [weigh[i][1] for i in range(sliceSeparated)]
         macro = [macro[i][1] for i in range(sliceSeparated)]
@@ -993,11 +1131,13 @@ def PAN11_stats(attribution, mode="strict", groundTruth=None, reject=None, shall
     return weigh, macro
 
 
-def print_PAN11(_weigh, _macro, results=None, shallow=False, sliceSeparated: tp.Optional[int] = None):
+def print_PAN11(
+    _weigh, _macro, results=None, shallow=False, sliceSeparated: tp.Optional[int] = None
+):
     """weigh and macro averages results are those produced by PAN11_stats.
-        results is a (path to a) pandas DataFrame containing the results obtained in the
-        PAN11 competition for comparison. The seven columns of interest are: RankSum and
-        Prec, Recall and F1 prefixed with m_ or M_ for weigh and macro averages."""
+    results is a (path to a) pandas DataFrame containing the results obtained in the
+    PAN11 competition for comparison. The seven columns of interest are: RankSum and
+    Prec, Recall and F1 prefixed with m_ or M_ for weigh and macro averages."""
     if results:
         if isinstance(results, str):
             with open(results) as fp:
@@ -1006,45 +1146,74 @@ def print_PAN11(_weigh, _macro, results=None, shallow=False, sliceSeparated: tp.
             PANres = results
         else:
             raise TypeError(
-                "groundTruth should be a DataFrame or a (relative)path to a csv containing such DataFrame.")
+                "groundTruth should be a DataFrame or a (relative)path to a csv containing such DataFrame."
+            )
         microPAN = {}
         macroPAN = {}
-        colnames = {'P': "Prec", 'R': "Recall", 'F': "F1"}
+        colnames = {"P": "Prec", "R": "Recall", "F": "F1"}
         for S in colnames:
             microPAN[S] = PANres[f"m_{colnames[S]}"].sort_values().to_numpy()
             macroPAN[S] = PANres[f"M_{colnames[S]}"].sort_values().to_numpy()
         PANtop = PANres.RankSum.min()
 
-    for s, (weigh, macro) in enumerate(zip(_weigh, _macro)) if sliceSeparated else [(" ",(_weigh, _macro))]:
-        for delta in (["dummy"] if shallow else weigh):
-            print(('' if shallow else f'Delta: {10**delta:3}\n') +
-                  f"{s}\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t{''if not results else f'(Min Rank:{PANtop})'}")
+    for s, (weigh, macro) in (
+        enumerate(zip(_weigh, _macro)) if sliceSeparated else [(" ", (_weigh, _macro))]
+    ):
+        for delta in ["dummy"] if shallow else weigh:
+            print(
+                ("" if shallow else f"Delta: {10**delta:3}\n")
+                + f"{s}\t\tMicro\t\t\tMacro\n\tP\tR\tF1\tP\tR\tF1\t{''if not results else f'(Min Rank:{PANtop})'}"
+            )
             twei = weigh if shallow else weigh[delta]
             tmac = macro if shallow else macro[delta]
-            for t in twei['P']:
-                print(t, *(round(twei['R'][t], 4) for S in ['P', 'R', 'F']),
-                      *(round(tmac[S][t], 4) for S in ['P', 'R', 'F']), sep="\t", end="\t")
+            for t in twei["P"]:
+                print(
+                    t,
+                    *(round(twei["R"][t], 4) for S in ["P", "R", "F"]),
+                    *(round(tmac[S][t], 4) for S in ["P", "R", "F"]),
+                    sep="\t",
+                    end="\t",
+                )
                 if results:
                     rankSum = 0
                     for S in twei:
-                        rankSum += microPAN[S].size+1 - \
-                            np.searchsorted(microPAN[S], twei['R'][t])
-                        rankSum += macroPAN[S].size+1 - \
-                            np.searchsorted(macroPAN[S], tmac[S][t])
+                        rankSum += (
+                            microPAN[S].size
+                            + 1
+                            - np.searchsorted(microPAN[S], twei["R"][t])
+                        )
+                        rankSum += (
+                            macroPAN[S].size
+                            + 1
+                            - np.searchsorted(macroPAN[S], tmac[S][t])
+                        )
                     print(rankSum)
                 else:
                     print()
 
 
-def PAN11(attributions, PANStyle="strict", groundTruth=None, othResult=None, sliceSeparated: tp.Optional[int] = None, slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None, authors: tp.Sequence[int] = None, shallow=True):
+def PAN11(
+    attributions,
+    PANStyle="strict",
+    groundTruth=None,
+    othResult=None,
+    sliceSeparated: tp.Optional[int] = None,
+    slices: tp.Optional[tp.Mapping[tp.Sequence[int], int]] = None,
+    authors: tp.Sequence[int] = None,
+    shallow=True,
+):
     if groundTruth:
-        weigh, macro = PAN11_stats(
-            attributions, PANStyle, groundTruth, shallow=shallow)
+        weigh, macro = PAN11_stats(attributions, PANStyle, groundTruth, shallow=shallow)
         print("Unknown:")
     else:
-        weigh, macro = PAN11_stats(attributions, PANStyle, shallow=shallow,
-                                   sliceSeparated=sliceSeparated, slices=slices, authors=authors)
+        weigh, macro = PAN11_stats(
+            attributions,
+            PANStyle,
+            shallow=shallow,
+            sliceSeparated=sliceSeparated,
+            slices=slices,
+            authors=authors,
+        )
         print("Known:")
-    print_PAN11(weigh, macro, othResult, shallow=shallow,
-                sliceSeparated=sliceSeparated)
+    print_PAN11(weigh, macro, othResult, shallow=shallow, sliceSeparated=sliceSeparated)
     return weigh, macro
