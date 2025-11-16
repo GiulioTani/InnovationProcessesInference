@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/678961833.svg)](https://zenodo.org/doi/10.5281/zenodo.12163217)
 # Innovation Processes for Inference
 
-This repository contains the code associated to [Innovation Processes for Inference (2023)](https://arxiv.org/abs/2306.05186) by G. Tani Raffaelli, M. Lalli, and F. Tria
+This repository contains the code associated to Tani Raffaelli, G., Lalli, M., & Tria, F. (2024). [Inference through innovation processes tested in the authorship attribution task.](https://www.nature.com/articles/s42005-024-01714-6) Communications Physics, 7(1), 300. https://doi.org/10.1038/s42005-024-01714-6
 
 Code from Giulio Tani Raffaelli
 
